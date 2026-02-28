@@ -1,0 +1,429 @@
+warning: in the working copy of 'HMCL/src/main/resources/assets/lang/I18N.properties', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'HMCL/src/main/resources/assets/lang/I18N_zh.properties', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/HMCL/src/main/java/org/jackhuang/hmcl/game/LauncherHelper.java b/HMCL/src/main/java/org/jackhuang/hmcl/game/LauncherHelper.java[m
+[1mindex 3e38774b2..c9ff03cfe 100644[m
+[1m--- a/HMCL/src/main/java/org/jackhuang/hmcl/game/LauncherHelper.java[m
+[1m+++ b/HMCL/src/main/java/org/jackhuang/hmcl/game/LauncherHelper.java[m
+[36m@@ -90,7 +90,7 @@[m [mpublic final class LauncherHelper {[m
+         this.account = Objects.requireNonNull(account);[m
+         this.selectedVersion = Objects.requireNonNull(selectedVersion);[m
+         this.setting = profile.getVersionSetting(selectedVersion);[m
+[31m-        this.launcherVisibility = setting.getLauncherVisibility();[m
+[32m+[m[32m        this.launcherVisibility = LauncherVisibility.KEEP;[m
+         this.showLogs = setting.isShowLogs();[m
+         this.launchingStepsPane.setTitle(i18n("version.launch"));[m
+     }[m
+[1mdiff --git a/HMCL/src/main/java/org/jackhuang/hmcl/setting/VersionSetting.java b/HMCL/src/main/java/org/jackhuang/hmcl/setting/VersionSetting.java[m
+[1mindex 3443e57c6..fbf12f9e6 100644[m
+[1m--- a/HMCL/src/main/java/org/jackhuang/hmcl/setting/VersionSetting.java[m
+[1m+++ b/HMCL/src/main/java/org/jackhuang/hmcl/setting/VersionSetting.java[m
+[36m@@ -666,7 +666,7 @@[m [mpublic final class VersionSetting implements Cloneable, Observable {[m
+      * 1 - Hide the launcher when the game starts.<br/>[m
+      * 2 - Keep the launcher open.<br/>[m
+      */[m
+[31m-    private final ObjectProperty<LauncherVisibility> launcherVisibilityProperty = new SimpleObjectProperty<>(this, "launcherVisibility", LauncherVisibility.HIDE);[m
+[32m+[m[32m    private final ObjectProperty<LauncherVisibility> launcherVisibilityProperty = new SimpleObjectProperty<>(this, "launcherVisibility", LauncherVisibility.KEEP);[m
+ [m
+     public ObjectProperty<LauncherVisibility> launcherVisibilityProperty() {[m
+         return launcherVisibilityProperty;[m
+[1mdiff --git a/HMCL/src/main/java/org/jackhuang/hmcl/ui/export/ModpackInfoPage.java b/HMCL/src/main/java/org/jackhuang/hmcl/ui/export/ModpackInfoPage.java[m
+[1mindex a1e796d21..71341bfd3 100644[m
+[1m--- a/HMCL/src/main/java/org/jackhuang/hmcl/ui/export/ModpackInfoPage.java[m
+[1m+++ b/HMCL/src/main/java/org/jackhuang/hmcl/ui/export/ModpackInfoPage.java[m
+[36m@@ -47,6 +47,7 @@[m [mimport org.jackhuang.hmcl.ui.wizard.WizardController;[m
+ import org.jackhuang.hmcl.ui.wizard.WizardPage;[m
+ import org.jackhuang.hmcl.util.SettingsMap;[m
+ import org.jackhuang.hmcl.util.StringUtils;[m
+[32m+[m[32mimport org.jackhuang.hmcl.util.javafx.SafeStringConverter;[m
+ import org.jackhuang.hmcl.util.io.FileUtils;[m
+ import org.jackhuang.hmcl.util.io.JarUtils;[m
+ import org.jackhuang.hmcl.util.platform.OperatingSystem;[m
+[36m@@ -274,7 +275,11 @@[m [mpublic final class ModpackInfoPage extends Control implements WizardPage {[m
+                             JFXSlider slider = new JFXSlider(0, 1, 0);[m
+                             HBox.setMargin(slider, new Insets(0, 0, 0, 8));[m
+                             HBox.setHgrow(slider, Priority.ALWAYS);[m
+[31m-                            slider.setValueFactory(self -> Bindings.createStringBinding(() -> (int) (self.getValue() * 100) + "%", self.valueProperty()));[m
+[32m+[m[32m                            slider.setValueFactory(self -> Bindings.createStringBinding(() -> {[m
+[32m+[m[32m                                double totalMemoryMB = MEGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize());[m
+[32m+[m[32m                                int valueMB = (int) (self.getValue() * totalMemoryMB);[m
+[32m+[m[32m                                return (valueMB / 1024) + " GiB";[m
+[32m+[m[32m                            }, self.valueProperty()));[m
+                             AtomicBoolean changedByTextField = new AtomicBoolean(false);[m
+                             FXUtils.onChangeAndOperate(skinnable.minMemory, minMemory -> {[m
+                                 changedByTextField.set(true);[m
+[36m@@ -287,12 +292,28 @@[m [mpublic final class ModpackInfoPage extends Control implements WizardPage {[m
+                             });[m
+ [m
+                             JFXTextField txtMinMemory = new JFXTextField();[m
+[31m-                            FXUtils.bindInt(txtMinMemory, skinnable.minMemory);[m
+[32m+[m[32m                            FXUtils.bind(txtMinMemory, skinnable.minMemory, new javafx.util.StringConverter<Number>() {[m
+[32m+[m[32m                                @Override[m
+[32m+[m[32m                                public String toString(Number object) {[m
+[32m+[m[32m                                    if (object == null) return "";[m
+[32m+[m[32m                                    return String.valueOf(object.intValue() / 1024);[m
+[32m+[m[32m                                }[m
+[32m+[m
+[32m+[m[32m                                @Override[m
+[32m+[m[32m                                public Number fromString(String string) {[m
+[32m+[m[32m                                    if (StringUtils.isBlank(string)) return 0;[m
+[32m+[m[32m                                    try {[m
+[32m+[m[32m                                        return Integer.parseInt(string) * 1024;[m
+[32m+[m[32m                                    } catch (NumberFormatException e) {[m
+[32m+[m[32m                                        return 0;[m
+[32m+[m[32m                                    }[m
+[32m+[m[32m                                }[m
+[32m+[m[32m                            });[m
+                             txtMinMemory.getValidators().add(new NumberValidator(i18n("input.number"), false));[m
+                             FXUtils.setLimitWidth(txtMinMemory, 60);[m
+                             validatingFields.add(txtMinMemory);[m
+ [m
+[31m-                            lowerBoundPane.getChildren().setAll(label, slider, txtMinMemory, new Label("MiB"));[m
+[32m+[m[32m                            lowerBoundPane.getChildren().setAll(label, slider, txtMinMemory, new Label(i18n("settings.memory.unit.gib")));[m
+                         }[m
+ [m
+                         pane.getChildren().setAll(title, lowerBoundPane);[m
+[1mdiff --git a/HMCL/src/main/java/org/jackhuang/hmcl/ui/versions/VersionSettingsPage.java b/HMCL/src/main/java/org/jackhuang/hmcl/ui/versions/VersionSettingsPage.java[m
+[1mindex ad6ab1418..b365c141d 100644[m
+[1m--- a/HMCL/src/main/java/org/jackhuang/hmcl/ui/versions/VersionSettingsPage.java[m
+[1m+++ b/HMCL/src/main/java/org/jackhuang/hmcl/ui/versions/VersionSettingsPage.java[m
+[36m@@ -81,7 +81,6 @@[m [mpublic final class VersionSettingsPage extends StackPane implements DecoratorPag[m
+     private final JFXComboBox<String> cboWindowsSize;[m
+     private final JFXTextField txtServerIP;[m
+     private final ComponentList componentList;[m
+[31m-    private final LineSelectButton<LauncherVisibility> launcherVisibilityPane;[m
+     private final JFXCheckBox chkAutoAllocate;[m
+     private final JFXCheckBox chkFullscreen;[m
+     private final ComponentSublist javaSublist;[m
+[36m@@ -275,25 +274,62 @@[m [mpublic final class VersionSettingsPage extends StackPane implements DecoratorPag[m
+                     JFXSlider slider = new JFXSlider(0, 1, 0);[m
+                     HBox.setMargin(slider, new Insets(0, 0, 0, 8));[m
+                     HBox.setHgrow(slider, Priority.ALWAYS);[m
+[31m-                    slider.setValueFactory(self -> Bindings.createStringBinding(() -> (int) (self.getValue() * 100) + "%", self.valueProperty()));[m
+[32m+[m[41m                    [m
+[32m+[m[32m                    double totalMemoryMB = MEGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize());[m
+[32m+[m[32m                    int totalMemoryGiB = (int) (totalMemoryMB / 1024);[m
+[32m+[m[32m                    double tickUnit = 1.0 / totalMemoryGiB;[m
+[32m+[m[41m                    [m
+[32m+[m[32m                    slider.setMajorTickUnit(tickUnit);[m
+[32m+[m[32m                    slider.setMinorTickCount(0);[m
+[32m+[m[32m                    slider.setSnapToTicks(true);[m
+[32m+[m[41m                    [m
+[32m+[m[32m                    slider.setValueFactory(self -> Bindings.createStringBinding(() -> {[m
+[32m+[m[32m                        double valueMB = self.getValue() * totalMemoryMB;[m
+[32m+[m[32m                        int valueGiB = (int) Math.round(valueMB / 1024);[m
+[32m+[m[32m                        return Math.max(1, valueGiB) + " GiB";[m
+[32m+[m[32m                    }, self.valueProperty()));[m
+[32m+[m[41m                    [m
+                     AtomicBoolean changedByTextField = new AtomicBoolean(false);[m
+                     FXUtils.onChangeAndOperate(maxMemory, maxMemory -> {[m
+                         changedByTextField.set(true);[m
+[31m-                        slider.setValue(maxMemory.intValue() * 1.0 / MEGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize()));[m
+[32m+[m[32m                        slider.setValue(maxMemory.intValue() * 1.0 / totalMemoryMB);[m
+                         changedByTextField.set(false);[m
+                     });[m
+[32m+[m[41m                    [m
+                     slider.valueProperty().addListener((value, oldVal, newVal) -> {[m
+                         if (changedByTextField.get()) return;[m
+[31m-                        maxMemory.set((int) (value.getValue().doubleValue() * MEGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize())));[m
+[32m+[m[32m                        double rawValueMB = value.getValue().doubleValue() * totalMemoryMB;[m
+[32m+[m[32m                        int valueGiB = (int) Math.round(rawValueMB / 1024);[m
+[32m+[m[32m                        valueGiB = Math.max(1, valueGiB);[m
+[32m+[m[32m                        int valueMB = valueGiB * 1024;[m
+[32m+[m[32m                        maxMemory.set(valueMB);[m
+                     });[m
+ [m
+                     JFXTextField txtMaxMemory = new JFXTextField();[m
+                     FXUtils.setLimitWidth(txtMaxMemory, 60);[m
+                     FXUtils.setValidateWhileTextChanged(txtMaxMemory, true);[m
+[31m-                    txtMaxMemory.textProperty().bindBidirectional(maxMemory, SafeStringConverter.fromInteger());[m
+[32m+[m[32m                    FXUtils.bind(txtMaxMemory, maxMemory, new javafx.util.StringConverter<Number>() {[m
+[32m+[m[32m                        @Override[m
+[32m+[m[32m                        public String toString(Number object) {[m
+[32m+[m[32m                            if (object == null) return "";[m
+[32m+[m[32m                            return String.valueOf(Math.max(1, object.intValue() / 1024));[m
+[32m+[m[32m                        }[m
+[32m+[m
+[32m+[m[32m                        @Override[m
+[32m+[m[32m                        public Number fromString(String string) {[m
+[32m+[m[32m                            if (StringUtils.isBlank(string)) return 1024;[m
+[32m+[m[32m                            try {[m
+[32m+[m[32m                                int valueGiB = Integer.parseInt(string);[m
+[32m+[m[32m                                valueGiB = Math.max(1, valueGiB);[m
+[32m+[m[32m                                return valueGiB * 1024;[m
+[32m+[m[32m                            } catch (NumberFormatException e) {[m
+[32m+[m[32m                                return 1024;[m
+[32m+[m[32m                            }[m
+[32m+[m[32m                        }[m
+[32m+[m[32m                    });[m
+                     txtMaxMemory.setValidators(new NumberValidator(i18n("input.number"), false));[m
+ [m
+[31m-                    lowerBoundPane.getChildren().setAll(label, slider, txtMaxMemory, new Label(i18n("settings.memory.unit.mib")));[m
+[32m+[m[32m                    lowerBoundPane.getChildren().setAll(label, slider, txtMaxMemory, new Label(i18n("settings.memory.unit.gib")));[m
+                 }[m
+ [m
+                 StackPane progressBarPane = new StackPane();[m
+[36m@@ -349,11 +385,6 @@[m [mpublic final class VersionSettingsPage extends StackPane implements DecoratorPag[m
+                 maxMemoryPane.getChildren().setAll(title, chkAutoAllocate, lowerBoundPane, progressBarPane, digitalPane);[m
+             }[m
+ [m
+[31m-            launcherVisibilityPane = new LineSelectButton<>();[m
+[31m-            launcherVisibilityPane.setTitle(i18n("settings.advanced.launcher_visible"));[m
+[31m-            launcherVisibilityPane.setItems(LauncherVisibility.values());[m
+[31m-            launcherVisibilityPane.setConverter(e -> i18n("settings.advanced.launcher_visibility." + e.name().toLowerCase(Locale.ROOT)));[m
+[31m-[m
+             BorderPane dimensionPane = new BorderPane();[m
+             {[m
+                 Label label = new Label(i18n("settings.game.dimension"));[m
+[36m@@ -438,7 +469,6 @@[m [mpublic final class VersionSettingsPage extends StackPane implements DecoratorPag[m
+                     javaSublist,[m
+                     gameDirSublist,[m
+                     maxMemoryPane,[m
+[31m-                    launcherVisibilityPane,[m
+                     dimensionPane,[m
+                     showLogsPane,[m
+                     enableDebugLogOutputPane,[m
+[36m@@ -518,7 +548,6 @@[m [mpublic final class VersionSettingsPage extends StackPane implements DecoratorPag[m
+             chkFullscreen.selectedProperty().unbindBidirectional(lastVersionSetting.fullscreenProperty());[m
+             showLogsPane.selectedProperty().unbindBidirectional(lastVersionSetting.showLogsProperty());[m
+             enableDebugLogOutputPane.selectedProperty().unbindBidirectional(lastVersionSetting.enableDebugLogOutputProperty());[m
+[31m-            launcherVisibilityPane.valueProperty().unbindBidirectional(lastVersionSetting.launcherVisibilityProperty());[m
+             processPriorityPane.valueProperty().unbindBidirectional(lastVersionSetting.processPriorityProperty());[m
+ [m
+             lastVersionSetting.usesGlobalProperty().removeListener(usesGlobalListener);[m
+[36m@@ -556,7 +585,6 @@[m [mpublic final class VersionSettingsPage extends StackPane implements DecoratorPag[m
+         chkFullscreen.selectedProperty().bindBidirectional(versionSetting.fullscreenProperty());[m
+         showLogsPane.selectedProperty().bindBidirectional(versionSetting.showLogsProperty());[m
+         enableDebugLogOutputPane.selectedProperty().bindBidirectional(versionSetting.enableDebugLogOutputProperty());[m
+[31m-        launcherVisibilityPane.valueProperty().bindBidirectional(versionSetting.launcherVisibilityProperty());[m
+         processPriorityPane.valueProperty().bindBidirectional(versionSetting.processPriorityProperty());[m
+ [m
+         if (versionId != null)[m
+[1mdiff --git a/HMCL/src/main/resources/assets/lang/I18N.properties b/HMCL/src/main/resources/assets/lang/I18N.properties[m
+[1mindex 4ac702239..c19d7c4ac 100644[m
+[1m--- a/HMCL/src/main/resources/assets/lang/I18N.properties[m
+[1m+++ b/HMCL/src/main/resources/assets/lang/I18N.properties[m
+[36m@@ -1462,6 +1462,7 @@[m [msettings.memory.allocate.manual.exceeded=%1$.1f GiB Allocated (%3$.1f GiB Availa[m
+ settings.memory.auto_allocate=Automatically Allocate[m
+ settings.memory.lower_bound=Minimum Memory[m
+ settings.memory.unit.mib=MiB[m
+[32m+[m[32msettings.memory.unit.gib=GiB[m
+ settings.memory.used_per_total=%1$.1f GiB Used / %2$.1f GiB Total[m
+ settings.physical_memory=Physical Memory Size[m
+ settings.show_log=Show Logs[m
+[1mdiff --git a/HMCL/src/main/resources/assets/lang/I18N_zh.properties b/HMCL/src/main/resources/assets/lang/I18N_zh.properties[m
+[1mindex a7846dacf..61d976b6f 100644[m
+[1m--- a/HMCL/src/main/resources/assets/lang/I18N_zh.properties[m
+[1m+++ b/HMCL/src/main/resources/assets/lang/I18N_zh.properties[m
+[36m@@ -1247,6 +1247,7 @@[m [msettings.memory.allocate.manual.exceeded=遊戲分配 %1$.1f GiB (%3$.1f GiB 可[m
+ settings.memory.auto_allocate=自動分配[m
+ settings.memory.lower_bound=最低分配[m
+ settings.memory.unit.mib=MiB[m
+[32m+[m[32msettings.memory.unit.gib=GiB[m
+ settings.memory.used_per_total=已使用 %1$.1f GiB / 總記憶體 %2$.1f GiB[m
+ settings.physical_memory=實體記Unit(tickUnit);
++                    slider.setMinorTickCount(0);
++                    slider.setSnapToTicks(true);
++                    
++                    slider.setValueFactory(self -> Bindings.createStringBinding(() -> {
++                        double valueMB = self.getValue() * totalMemoryMB;
++                        int valueGiB = (int) Math.round(valueMB / 1024);
++                        return Math.max(1, valueGiB) + " GiB";
++                    }, self.valueProperty()));
++                    
+                     AtomicBoolean changedByTextField = new AtomicBoolean(false);
+                     FXUtils.onChangeAndOperate(maxMemory, maxMemory -> {
+                         changedByTextField.set(true);
+-                   [33mef3c1b892[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m fix: MicrosoftAccountLoginPane 缺少 HEADER (#5656)
+[33made057b81[m Fix 5651: 世界管理不应展示 .zip 文件的世界 (#5652)
+[33m2b1de479e[m feat (版本列表): 添加 1.21.11-rc3_unobfuscated. (#5655)
+[33m5502a4efa[m feat: 切换实例隔离设置后自动刷新其他子页面 (#5638)
+[33m5c36c0047[m 修复语言为文言时下载游戏的选择模组加载器页面的版本号未本地化的问题 (#5359)
+[33mbb92b5ff8[m fix: 选择角色弹窗未适配深色模式 (#5605)
+[33m8b90464d3[m chore: update copyright year and attribution (#5622)
+[33maaea47332[m [Bugfix] Fix #5421: 修复部分滚动页面滚动时圆角消失的问题 (#5463)
+[33me8f9f093f[m chore(l10n): refine tradchinese (#5623)
+[33m9dc493dd0[m 清理 ToggleButton 4 创建 (#5630)
+[1mdiff --git a/HMCL/src/main/java/org/jackhuang/hmcl/game/LauncherHelper.java b/HMCL/src/main/java/org/jackhuang/hmcl/game/LauncherHelper.java[m
+[1mindex 3e38774b2..c9ff03cfe 100644[m
+[1m--- a/HMCL/src/main/java/org/jackhuang/hmcl/game/LauncherHelper.java[m
+[1m+++ b/HMCL/src/main/java/org/jackhuang/hmcl/game/LauncherHelper.java[m
+[36m@@ -90,7 +90,7 @@[m [mpublic final class LauncherHelper {[m
+         this.account = Objects.requireNonNull(account);[m
+         this.selectedVersion = Objects.requireNonNull(selectedVersion);[m
+         this.setting = profile.getVersionSetting(selectedVersion);[m
+[31m-        this.launcherVisibility = setting.getLauncherVisibility();[m
+[32m+[m[32m        this.launcherVisibility = LauncherVisibility.KEEP;[m
+         this.showLogs = setting.isShowLogs();[m
+         this.launchingStepsPane.setTitle(i18n("version.launch"));[m
+     }[m
+     slider.setValue(maxMemory.intValue() * 1.0 / MEGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize()));
++                        slider.setValue(maxMemory.intValue() * 1.0 / totalMemoryMB);
+                         changedByTextField.set(false);
+                     });
++                    
+                     slider.valueProperty().addListener((value, oldVal, newVal) -> {
+                         if (changedByTextField.get()) return;
+-                        maxMemory.set((int) (value.getValue().doubleValue() * MEGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize())));
++                        double rawValueMB = value.getValue().doubleValue() * totalMemoryMB;
++                        int valueGiB = (int) Math.round(rawValueMB / 1024);
++                        valueGiB = Math.max(1, valueGiB);
++                        int valueMB = valueGiB * 1024;
++                        maxMemory.set(valueMB);
+                     });
+ 
+                     JFXTextField txtMaxMemory = new JFXTextField();
+                     FXUtils.setLimitWidth(txtMaxMemory, 60);
+                     FXUtils.setValidateWhileTextChanged(txtMaxMemory, true);
+-                    txtMaxMemory.textProperty().bindBidirectional(maxMemory, SafeStringConverter.fromInteger());
++                    FXUtils.bind(txtMaxMemory, maxMemory, new javafx.util.StringConverter<Number>() {
++                        @Override
++                        public String toString(Number object) {
++                            if (object == null) return "";
++                            return String.valueOf(Math.max(1, object.intValue() / 1024));
++                        }
++
++                        @Override
++                        public Number fromString(String string) {
++                            if (StringUtils.isBlank(string)) return 1024;
++                            try {
++                                int valueGiB = Integer.parseInt(string);
++                                valueGiB = Math.max(1, valueGiB);
++                                return valueGiB * 1024;
++                            } catch (NumberFormatException e) {
++                                return 1024;
++                            }
++                        }
++                    });
+                     txtMaxMemory.setValidators(new NumberValidator(i18n("input.number"), false));
+ 
+-                    lowerBoundPane.getChildren().setAll(label, slider, txtMaxMemory, new Label(i18n("settings.memory.unit.mib")));
++                    lowerBoundPane.getChildren().setAll(label, slider, txtMaxMemory, new Label(i18n("settings.memory.unit.gib")));
+                 }
+ 
+                 StackPane progressBarPane = new StackPane();
+@@ -349,11 +385,6 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
+                 maxMemoryPane.getChildren().setAll(title, chkAutoAllocate, lowerBoundPane, progressBarPane, digitalPane);
+             }
+ 
+-            launcherVisibilityPane = new LineSelectButton<>();
+-            launcherVisibilityPane.setTitle(i18n("settings.advanced.launcher_visible"));
+-            launcherVisibilityPane.setItems(LauncherVisibility.values());
+-            launcherVisibilityPane.setConverter(e -> i18n("settings.advanced.launcher_visibility." + e.name().toLowerCase(Locale.ROOT)));
+-
+             BorderPane dimensionPane = new BorderPane();
+             {
+                 Label label = new Label(i18n("settings.game.dimension"));
+@@ -438,7 +469,6 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
+                     javaSublist,
+                     gameDirSublist,
+                     maxMemoryPane,
+-                    launcherVisibilityPane,
+                     dimensionPane,
+                     showLogsPane,
+                     enableDebugLogOutputPane,
+@@ -518,7 +548,6 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
+             chkFullscreen.selectedProperty().unbindBidirectional(lastVersionSetting.fullscreenProperty());
+             showLogsPane.selectedProperty().unbindBidirectional(lastVersionSetting.showLogsProperty());
+             enableDebugLogOutputPane.selectedProperty().unbindBidirectional(lastVersionSetting.enableDebugLogOutputProperty());
+-            launcherVisibilityPane.valueProperty().unbindBidirectional(lastVersionSetting.launcherVisibilityProperty());
+             processPriorityPane.valueProperty().unbindBidirectional(lastVersionSetting.processPriorityProperty());
+ 
+             lastVersionSetting.usesGlobalProperty().removeListener(usesGlobalListener);
+@@ -556,7 +585,6 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
+         chkFullscreen.selectedProperty().bindBidirectional(versionSetting.fullscreenProperty());
+         showLogsPane.selectedProperty().bindBidirectional(versionSetting.showLogsProperty());
+         enableDebugLogOutputPane.selectedProperty().bindBidirectional(versionSetting.enableDebugLogOutputProperty());
+-        launcherVisibilityPane.valueProperty().bindBidirectional(versionSetting.launcherVisibilityProperty());
+         processPriorityPane.valueProperty().bindBidirectional(versionSetting.processPriorityProperty());
+ 
+         if (versionId != null)
+diff --git a/HMCL/src/main/resources/assets/lang/I18N.properties b/HMCL/src/main/resources/assets/lang/I18N.properties
+index 4ac702239..c19d7c4ac 100644
+--- a/HMCL/src/main/resources/assets/lang/I18N.properties
++++ b/HMCL/src/main/resources/assets/lang/I18N.properties
+@@ -1462,6 +1462,7 @@ settings.memory.allocate.manual.exceeded=%1$.1f GiB Allocated (%3$.1f GiB Availa
+ settings.memory.auto_allocate=Automatically Allocate
+ settings.memory.lower_bound=Minimum Memory
+ settings.memory.unit.mib=MiB
++settings.memory.unit.gib=GiB
+ settings.memory.used_per_total=%1$.1f GiB Used / %2$.1f GiB Total
+ settings.physical_memory=Physical Memory Size
+ settings.show_log=Show Logs
+diff --git a/HMCL/src/main/resources/assets/lang/I18N_zh.properties b/HMCL/src/main/resources/assets/lang/I18N_zh.properties
+index a7846dacf..61d976b6f 100644
+--- a/HMCL/src/main/resources/assets/lang/I18N_zh.properties
++++ b/HMCL/src/main/resources/assets/lang/I18N_zh.properties
+@@ -1247,6 +1247,7 @@ settings.memory.allocate.manual.exceeded=遊戲分配 %1$.1f GiB (%3$.1f GiB 可
+ settings.memory.auto_allocate=自動分配
+ settings.memory.lower_bound=最低分配
+ settings.memory.unit.mib=MiB
++settings.memory.unit.gib=GiB
+ settings.memory.used_per_total=已使用 %1$.1f GiB / 總記憶體 %2$.1f GiB
+ settings.physical_memory=實體記憶體大小
+ settings.show_log=查看日誌
+diff --git a/HMCL/src/main/resources/assets/lang/I18N_zh_CN.properties b/HMCL/src/main/resources/assets/lang/I18N_zh_CN.properties
+index b4e00451a..80f114175 100644
+--- a/HMCL/src/main/resources/assets/lang/I18N_zh_CN.properties
++++ b/HMCL/src/main/resources/assets/lang/I18N_zh_CN.properties
+@@ -1252,6 +1252,7 @@ settings.memory.allocate.manual.exceeded=游戏分配 %1$.1f GiB (设备仅 %3$.
+ settings.memory.auto_allocate=自动分配内存
+ settings.memory.lower_bound=最低内存分配
+ settings.memory.unit.mib=MiB
++settings.memory.unit.gib=GiB
+ settings.memory.used_per_total=已使用 %1$.1f GiB / 总内存 %2$.1f GiB
+ settings.physical_memory=物理内存大小
+ settings.show_log=查看日志
+diff --git a/HMCLCore/src/main/java/org/jackhuang/hmcl/util/platform/OperatingSystem.java b/HMCLCore/src/main/java/org/jackhuang/hmcl/util/platform/OperatingSystem.java
+index 51f6c2f6f..a1debc82c 100644
+--- a/HMCLCore/src/main/java/org/jackhuang/hmcl/util/platform/OperatingSystem.java
++++ b/HMCLCore/src/main/java/org/jackhuang/hmcl/util/platform/OperatingSystem.java
+@@ -289,8 +289,19 @@ public enum OperatingSystem {
+             case FREEBSD:
+                 return Paths.get(home, "." + folder).toAbsolutePath();
+             case WINDOWS:
++                Path basePath;
+                 String appdata = System.getenv("APPDATA");
+-                return Paths.get(appdata == null ? home : appdata, "." + folder).toAbsolutePath();
++                if (appdata != null) {
++                    basePath = Paths.get(appdata);
++                } else {
++                    String localAppData = System.getenv("LOCALAPPDATA");
++                    if (localAppData != null) {
++                        basePath = Paths.get(localAppData);
++                    } else {
++                        basePath = Paths.get(home, "AppData", "Ro
+                   SSUUMMMMAARRYY OOFF LLEESSSS CCOOMMMMAANNDDSS
+
+      Commands marked with * may be preceded by a number, _N.
+      Notes in parentheses indicate the behavior if _N is given.
+      A key preceded by a caret indicates the Ctrl key; thus ^K is ctrl-K.
+
+  h  H                 Display this help.
+  q  :q  Q  :Q  ZZ     Exit.
+ ---------------------------------------------------------------------------
+
+                           MMOOVVIINNGG
+
+  e  ^E  j  ^N  CR  *  Forward  one line   (or _N lines).
+  y  ^Y  k  ^K  ^P  *  Backward one line   (or _N lines).
+  ESC-j             *  Forward  one file line (or _N file lines).
+  ESC-k             *  Backward one file line (or _N file lines).
+  f  ^F  ^V  SPACE  *  Forward  one window (or _N lines).
+  b  ^B  ESC-v      *  Backward one window (or _N lines).
+  z                 *  Forward  one window (and set window to _N).
+  w                 *  Backward one window (and set window to _N).
+  ESC-SPACE         *  Forward  one window, but don't stop at end-of-file.
+  ESC-b             *  Backward one window, but don't stop at beginning-of-file.
+  d  ^D             *  Forward  one half-window (and set half-window to _N).
+  u  ^U             *  Backward one half-window (and set half-window to _N).
+  ESC-)  RightArrow *  Right one half screen width (or _N positions).
+  ESC-(  LeftArrow  *  Left  one half screen width (or _N positions).
+  ESC-}  ^RightArrow   Right to last column displayed.
+  ESC-{  ^LeftArrow    Left  to first column.
+  F                    Forward forever; like "tail -f".
+  ESC-F                Like F but stop when search pattern is found.
+  ESC-f                Like F but ring the bell when search pattern is found.
+  r  ^R  ^L            Repaint screen.
+  R                    Repaint screen, discarding buffered input.
+        ---------------------------------------------------
+        Default "window" is the screen height.

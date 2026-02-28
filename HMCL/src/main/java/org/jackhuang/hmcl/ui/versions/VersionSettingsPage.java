@@ -81,7 +81,6 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private final JFXComboBox<String> cboWindowsSize;
     private final JFXTextField txtServerIP;
     private final ComponentList componentList;
-    private final LineSelectButton<LauncherVisibility> launcherVisibilityPane;
     private final JFXCheckBox chkAutoAllocate;
     private final JFXCheckBox chkFullscreen;
     private final ComponentSublist javaSublist;
@@ -275,25 +274,62 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     JFXSlider slider = new JFXSlider(0, 1, 0);
                     HBox.setMargin(slider, new Insets(0, 0, 0, 8));
                     HBox.setHgrow(slider, Priority.ALWAYS);
-                    slider.setValueFactory(self -> Bindings.createStringBinding(() -> (int) (self.getValue() * 100) + "%", self.valueProperty()));
+                    
+                    double totalMemoryMB = MEGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize());
+                    int totalMemoryGiB = (int) (totalMemoryMB / 1024);
+                    double tickUnit = 1.0 / totalMemoryGiB;
+                    
+                    slider.setMajorTickUnit(tickUnit);
+                    slider.setMinorTickCount(0);
+                    slider.setSnapToTicks(true);
+                    
+                    slider.setValueFactory(self -> Bindings.createStringBinding(() -> {
+                        double valueMB = self.getValue() * totalMemoryMB;
+                        int valueGiB = (int) Math.round(valueMB / 1024);
+                        return Math.max(1, valueGiB) + " GiB";
+                    }, self.valueProperty()));
+                    
                     AtomicBoolean changedByTextField = new AtomicBoolean(false);
                     FXUtils.onChangeAndOperate(maxMemory, maxMemory -> {
                         changedByTextField.set(true);
-                        slider.setValue(maxMemory.intValue() * 1.0 / MEGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize()));
+                        slider.setValue(maxMemory.intValue() * 1.0 / totalMemoryMB);
                         changedByTextField.set(false);
                     });
+                    
                     slider.valueProperty().addListener((value, oldVal, newVal) -> {
                         if (changedByTextField.get()) return;
-                        maxMemory.set((int) (value.getValue().doubleValue() * MEGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize())));
+                        double rawValueMB = value.getValue().doubleValue() * totalMemoryMB;
+                        int valueGiB = (int) Math.round(rawValueMB / 1024);
+                        valueGiB = Math.max(1, valueGiB);
+                        int valueMB = valueGiB * 1024;
+                        maxMemory.set(valueMB);
                     });
 
                     JFXTextField txtMaxMemory = new JFXTextField();
                     FXUtils.setLimitWidth(txtMaxMemory, 60);
                     FXUtils.setValidateWhileTextChanged(txtMaxMemory, true);
-                    txtMaxMemory.textProperty().bindBidirectional(maxMemory, SafeStringConverter.fromInteger());
+                    FXUtils.bind(txtMaxMemory, maxMemory, new javafx.util.StringConverter<Number>() {
+                        @Override
+                        public String toString(Number object) {
+                            if (object == null) return "";
+                            return String.valueOf(Math.max(1, object.intValue() / 1024));
+                        }
+
+                        @Override
+                        public Number fromString(String string) {
+                            if (StringUtils.isBlank(string)) return 1024;
+                            try {
+                                int valueGiB = Integer.parseInt(string);
+                                valueGiB = Math.max(1, valueGiB);
+                                return valueGiB * 1024;
+                            } catch (NumberFormatException e) {
+                                return 1024;
+                            }
+                        }
+                    });
                     txtMaxMemory.setValidators(new NumberValidator(i18n("input.number"), false));
 
-                    lowerBoundPane.getChildren().setAll(label, slider, txtMaxMemory, new Label(i18n("settings.memory.unit.mib")));
+                    lowerBoundPane.getChildren().setAll(label, slider, txtMaxMemory, new Label(i18n("settings.memory.unit.gib")));
                 }
 
                 StackPane progressBarPane = new StackPane();
@@ -348,11 +384,6 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
                 maxMemoryPane.getChildren().setAll(title, chkAutoAllocate, lowerBoundPane, progressBarPane, digitalPane);
             }
-
-            launcherVisibilityPane = new LineSelectButton<>();
-            launcherVisibilityPane.setTitle(i18n("settings.advanced.launcher_visible"));
-            launcherVisibilityPane.setItems(LauncherVisibility.values());
-            launcherVisibilityPane.setConverter(e -> i18n("settings.advanced.launcher_visibility." + e.name().toLowerCase(Locale.ROOT)));
 
             BorderPane dimensionPane = new BorderPane();
             {
@@ -438,7 +469,6 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     javaSublist,
                     gameDirSublist,
                     maxMemoryPane,
-                    launcherVisibilityPane,
                     dimensionPane,
                     showLogsPane,
                     enableDebugLogOutputPane,
@@ -518,7 +548,6 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             chkFullscreen.selectedProperty().unbindBidirectional(lastVersionSetting.fullscreenProperty());
             showLogsPane.selectedProperty().unbindBidirectional(lastVersionSetting.showLogsProperty());
             enableDebugLogOutputPane.selectedProperty().unbindBidirectional(lastVersionSetting.enableDebugLogOutputProperty());
-            launcherVisibilityPane.valueProperty().unbindBidirectional(lastVersionSetting.launcherVisibilityProperty());
             processPriorityPane.valueProperty().unbindBidirectional(lastVersionSetting.processPriorityProperty());
 
             lastVersionSetting.usesGlobalProperty().removeListener(usesGlobalListener);
@@ -556,7 +585,6 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         chkFullscreen.selectedProperty().bindBidirectional(versionSetting.fullscreenProperty());
         showLogsPane.selectedProperty().bindBidirectional(versionSetting.showLogsProperty());
         enableDebugLogOutputPane.selectedProperty().bindBidirectional(versionSetting.enableDebugLogOutputProperty());
-        launcherVisibilityPane.valueProperty().bindBidirectional(versionSetting.launcherVisibilityProperty());
         processPriorityPane.valueProperty().bindBidirectional(versionSetting.processPriorityProperty());
 
         if (versionId != null)

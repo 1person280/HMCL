@@ -289,8 +289,19 @@ public enum OperatingSystem {
             case FREEBSD:
                 return Paths.get(home, "." + folder).toAbsolutePath();
             case WINDOWS:
+                Path basePath;
                 String appdata = System.getenv("APPDATA");
-                return Paths.get(appdata == null ? home : appdata, "." + folder).toAbsolutePath();
+                if (appdata != null) {
+                    basePath = Paths.get(appdata);
+                } else {
+                    String localAppData = System.getenv("LOCALAPPDATA");
+                    if (localAppData != null) {
+                        basePath = Paths.get(localAppData);
+                    } else {
+                        basePath = Paths.get(home, "AppData", "Roaming");
+                    }
+                }
+                return basePath.resolve("." + folder).toAbsolutePath();
             case MACOS:
                 return Paths.get(home, "Library", "Application Support", folder).toAbsolutePath();
             default:

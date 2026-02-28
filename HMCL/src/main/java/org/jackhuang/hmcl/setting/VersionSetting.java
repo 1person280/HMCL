@@ -666,7 +666,7 @@ public final class VersionSetting implements Cloneable, Observable {
      * 1 - Hide the launcher when the game starts.<br/>
      * 2 - Keep the launcher open.<br/>
      */
-    private final ObjectProperty<LauncherVisibility> launcherVisibilityProperty = new SimpleObjectProperty<>(this, "launcherVisibility", LauncherVisibility.HIDE);
+    private final ObjectProperty<LauncherVisibility> launcherVisibilityProperty = new SimpleObjectProperty<>(this, "launcherVisibility", LauncherVisibility.KEEP);
 
     public ObjectProperty<LauncherVisibility> launcherVisibilityProperty() {
         return launcherVisibilityProperty;

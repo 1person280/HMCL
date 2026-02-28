@@ -47,6 +47,7 @@ import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -274,7 +275,11 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                             JFXSlider slider = new JFXSlider(0, 1, 0);
                             HBox.setMargin(slider, new Insets(0, 0, 0, 8));
                             HBox.setHgrow(slider, Priority.ALWAYS);
-                            slider.setValueFactory(self -> Bindings.createStringBinding(() -> (int) (self.getValue() * 100) + "%", self.valueProperty()));
+                            slider.setValueFactory(self -> Bindings.createStringBinding(() -> {
+                                double totalMemoryMB = MEGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize());
+                                int valueMB = (int) (self.getValue() * totalMemoryMB);
+                                return (valueMB / 1024) + " GiB";
+                            }, self.valueProperty()));
                             AtomicBoolean changedByTextField = new AtomicBoolean(false);
                             FXUtils.onChangeAndOperate(skinnable.minMemory, minMemory -> {
                                 changedByTextField.set(true);
@@ -287,12 +292,28 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                             });
 
                             JFXTextField txtMinMemory = new JFXTextField();
-                            FXUtils.bindInt(txtMinMemory, skinnable.minMemory);
+                            FXUtils.bind(txtMinMemory, skinnable.minMemory, new javafx.util.StringConverter<Number>() {
+                                @Override
+                                public String toString(Number object) {
+                                    if (object == null) return "";
+                                    return String.valueOf(object.intValue() / 1024);
+                                }
+
+                                @Override
+                                public Number fromString(String string) {
+                                    if (StringUtils.isBlank(string)) return 0;
+                                    try {
+                                        return Integer.parseInt(string) * 1024;
+                                    } catch (NumberFormatException e) {
+                                        return 0;
+                                    }
+                                }
+                            });
                             txtMinMemory.getValidators().add(new NumberValidator(i18n("input.number"), false));
                             FXUtils.setLimitWidth(txtMinMemory, 60);
                             validatingFields.add(txtMinMemory);
 
-                            lowerBoundPane.getChildren().setAll(label, slider, txtMinMemory, new Label("MiB"));
+                            lowerBoundPane.getChildren().setAll(label, slider, txtMinMemory, new Label(i18n("settings.memory.unit.gib")));
                         }
 
                         pane.getChildren().setAll(title, lowerBoundPane);

@@ -90,7 +90,7 @@ public final class LauncherHelper {
         this.account = Objects.requireNonNull(account);
         this.selectedVersion = Objects.requireNonNull(selectedVersion);
         this.setting = profile.getVersionSetting(selectedVersion);
-        this.launcherVisibility = setting.getLauncherVisibility();
+        this.launcherVisibility = LauncherVisibility.KEEP;
         this.showLogs = setting.isShowLogs();
         this.launchingStepsPane.setTitle(i18n("version.launch"));
     }
