@@ -43,6 +43,7 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
     private final TabHeader.Tab<DownloadSettingsPage> downloadTab = new TabHeader.Tab<>("downloadSettingsPage");
     private final TabHeader.Tab<HelpPage> helpTab = new TabHeader.Tab<>("helpPage");
     private final TabHeader.Tab<AboutPage> aboutTab = new TabHeader.Tab<>("aboutPage");
+    private final TabHeader.Tab<DependencyPage> dependencyTab = new TabHeader.Tab<>("dependencyPage");
     private final TabHeader.Tab<FeedbackPage> feedbackTab = new TabHeader.Tab<>("feedbackPage");
     private final TransitionPane transitionPane = new TransitionPane();
 
@@ -55,7 +56,8 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
         helpTab.setNodeSupplier(HelpPage::new);
         feedbackTab.setNodeSupplier(FeedbackPage::new);
         aboutTab.setNodeSupplier(AboutPage::new);
-        tab = new TabHeader(transitionPane, gameTab, javaManagementTab, settingsTab, personalizationTab, downloadTab, helpTab, feedbackTab, aboutTab);
+        dependencyTab.setNodeSupplier(DependencyPage::new);
+        tab = new TabHeader(transitionPane, gameTab, javaManagementTab, settingsTab, personalizationTab, downloadTab, helpTab, feedbackTab, aboutTab, dependencyTab);
 
         tab.select(gameTab);
         addEventHandler(Navigator.NavigationEvent.NAVIGATED, event -> gameTab.getNode().loadVersion(Profiles.getSelectedProfile(), null));
@@ -70,7 +72,8 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
                 .startCategory(i18n("help").toUpperCase(Locale.ROOT))
                 .addNavigationDrawerTab(tab, helpTab, i18n("help"), SVG.HELP, SVG.HELP_FILL)
                 .addNavigationDrawerTab(tab, feedbackTab, i18n("contact"), SVG.FEEDBACK, SVG.FEEDBACK_FILL)
-                .addNavigationDrawerTab(tab, aboutTab, i18n("about"), SVG.INFO, SVG.INFO_FILL);
+                .addNavigationDrawerTab(tab, aboutTab, i18n("about"), SVG.INFO, SVG.INFO_FILL)
+                .addNavigationDrawerTab(tab, dependencyTab, i18n("about.dependency"), SVG.INFO, SVG.INFO_FILL);
         FXUtils.setLimitWidth(sideBar, 200);
         setLeft(sideBar);
 

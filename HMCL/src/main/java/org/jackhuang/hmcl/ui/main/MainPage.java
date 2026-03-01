@@ -85,6 +85,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class MainPage extends StackPane implements DecoratorPage {
     private static final String ANNOUNCEMENT = "announcement";
+    private static final String THIRD_PARTY_ANNOUNCEMENT = "third_party_announcement";
 
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
 
@@ -117,10 +118,18 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
         setPadding(new Insets(20));
 
-        if (Metadata.isNightly() || (Metadata.isDev() && !Objects.equals(Metadata.VERSION, config().getShownTips().get(ANNOUNCEMENT)))) {
+        boolean showThirdPartyAnnouncement = !Objects.equals("true", config().getShownTips().get(THIRD_PARTY_ANNOUNCEMENT));
+        boolean showDevAnnouncement = Metadata.isNightly() || (Metadata.isDev() && !Objects.equals(Metadata.VERSION, config().getShownTips().get(ANNOUNCEMENT)));
+
+        if (showThirdPartyAnnouncement || showDevAnnouncement) {
             String title;
             String content;
-            if (Metadata.isNightly()) {
+            boolean isThirdParty = showThirdPartyAnnouncement;
+
+            if (isThirdParty) {
+                title = i18n("about.thirdparty.announcement");
+                content = i18n("about.thirdparty.announcement.hint");
+            } else if (Metadata.isNightly()) {
                 title = i18n("update.channel.nightly.title");
                 content = i18n("update.channel.nightly.hint");
             } else {
@@ -137,7 +146,9 @@ public final class MainPage extends StackPane implements DecoratorPage {
             JFXButton btnHide = new JFXButton();
             btnHide.setOnAction(e -> {
                 announcementPane.setContent(new StackPane(), ContainerAnimations.FADE);
-                if (Metadata.isDev()) {
+                if (isThirdParty) {
+                    config().getShownTips().put(THIRD_PARTY_ANNOUNCEMENT, "true");
+                } else if (Metadata.isDev()) {
                     config().getShownTips().put(ANNOUNCEMENT, Metadata.VERSION);
                 }
             });

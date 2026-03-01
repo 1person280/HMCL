@@ -67,7 +67,7 @@ public interface DependencyManager {
     Task<?> checkPatchCompletionAsync(Version version, boolean integrityCheck);
 
     /**
-     * The builder to build a brand new game then libraries such as Forge, LiteLoader and OptiFine.
+     * The builder to build a brand new game then libraries such as Forge and OptiFine.
      */
     GameBuilder gameBuilder();
 
@@ -77,7 +77,7 @@ public interface DependencyManager {
      *
      * @param gameVersion the Minecraft version that the library relies on.
      * @param baseVersion the version.json.
-     * @param libraryId the type of being installed library. i.e. "forge", "liteloader", "optifine"
+     * @param libraryId the type of being installed library. i.e. "forge", "optifine"
      * @param libraryVersion the version of being installed library.
      * @return the task to install the specific library.
      */
@@ -96,7 +96,7 @@ public interface DependencyManager {
     /**
      * Get registered version list.
      *
-     * @param id the id of version list. i.e. game, forge, liteloader, optifine
+     * @param id the id of version list. i.e. game, forge, optifine
      * @throws IllegalArgumentException if the version list of specific id is not found.
      */
     VersionList<?> getVersionList(String id);

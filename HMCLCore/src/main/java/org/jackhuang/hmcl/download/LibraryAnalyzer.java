@@ -121,7 +121,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
     /**
      * Remove library by library id
      *
-     * @param libraryId patch id or "forge"/"optifine"/"liteloader"/"fabric"/"quilt"/"neoforge"/"cleanroom"
+     * @param libraryId patch id or "optifine"/"fabric"/"neoforge"
      * @return this
      */
     public LibraryAnalyzer removeLibrary(String libraryId) {
@@ -170,11 +170,8 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         Version resolvedVersion = version.resolve(provider);
         String mainClass = resolvedVersion.getMainClass();
         return mainClass != null && (LAUNCH_WRAPPER_MAIN.equals(mainClass)
-                || mainClass.startsWith("net.minecraftforge")
                 || mainClass.startsWith("net.neoforged")
-                || mainClass.startsWith("top.outlands") //Cleanroom
                 || mainClass.startsWith("net.fabricmc")
-                || mainClass.startsWith("org.quiltmc")
                 || mainClass.startsWith("cpw.mods"));
     }
 
@@ -189,59 +186,8 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
 
     public enum LibraryType {
         MINECRAFT(true, "game", "^$", "^$", null),
-        LEGACY_FABRIC(true, "legacyfabric", "net\\.fabricmc", "fabric-loader", ModLoaderType.LEGACY_FABRIC) {
-            @Override
-            protected boolean matchLibrary(Library library, List<Library> libraries) {
-                if (!super.matchLibrary(library, libraries)) {
-                    return false;
-                }
-                for (Library l : libraries) {
-                    if ("net.legacyfabric".equals(l.getGroupId())) {
-                        return true;
-                    }
-                }
-                return false;
-            }
-        },
-        LEGACY_FABRIC_API(false, "legacyfabric-api", "net\\.legacyfabric", "legacyfabric-api", null),
-        FABRIC(true, "fabric", "net\\.fabricmc", "fabric-loader", ModLoaderType.FABRIC) {
-            @Override
-            protected boolean matchLibrary(Library library, List<Library> libraries) {
-                if (!super.matchLibrary(library, libraries)) {
-                    return false;
-                }
-                for (Library l : libraries) {
-                    if ("net.legacyfabric".equals(l.getGroupId())) {
-                        return false;
-                    }
-                }
-                return true;
-            }
-        },
+        FABRIC(true, "fabric", "net\\.fabricmc", "fabric-loader", ModLoaderType.FABRIC),
         FABRIC_API(true, "fabric-api", "net\\.fabricmc", "fabric-api", null),
-        FORGE(true, "forge", "net\\.minecraftforge", "(forge|fmlloader)", ModLoaderType.FORGE) {
-            private final Pattern FORGE_VERSION_MATCHER = Pattern.compile("^([0-9.]+)-(?<forge>[0-9.]+)(-([0-9.]+))?$");
-
-            @Override
-            protected String patchVersion(Version gameVersion, String libraryVersion) {
-                Matcher matcher = FORGE_VERSION_MATCHER.matcher(libraryVersion);
-                if (matcher.find()) {
-                    return matcher.group("forge");
-                }
-                return super.patchVersion(gameVersion, libraryVersion);
-            }
-
-            @Override
-            protected boolean matchLibrary(Library library, List<Library> libraries) {
-                for (Library l : libraries) {
-                    if (NEO_FORGE.matchLibrary(l, libraries)) {
-                        return false;
-                    }
-                }
-                return super.matchLibrary(library, libraries);
-            }
-        },
-        CLEANROOM(true, "cleanroom", "com\\.cleanroommc", "cleanroom", ModLoaderType.CLEANROOM),
         NEO_FORGE(true, "neoforge", "net\\.neoforged\\.fancymodloader", "(core|loader)", ModLoaderType.NEO_FORGED) {
             private final Pattern NEO_FORGE_VERSION_MATCHER = Pattern.compile("^([0-9.]+)-(?<forge>[0-9.]+)(-([0-9.]+))?$");
 
@@ -294,10 +240,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
             }
 
         },
-        LITELOADER(true, "liteloader", "com\\.mumfrey", "liteloader", ModLoaderType.LITE_LOADER),
         OPTIFINE(false, "optifine", "(net\\.)?optifine", "^(?!.*launchwrapper).*$", null),
-        QUILT(true, "quilt", "org\\.quiltmc", "quilt-loader", ModLoaderType.QUILT),
-        QUILT_API(true, "quilt-api", "org\\.quiltmc", "quilt-api", null),
         BOOTSTRAP_LAUNCHER(false, "", "cpw\\.mods", "bootstraplauncher", null);
 
         private final boolean modLoader;
@@ -389,7 +332,6 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
     public static final String LAUNCH_WRAPPER_MAIN = "net.minecraft.launchwrapper.Launch";
     public static final String MOD_LAUNCHER_MAIN = "cpw.mods.modlauncher.Launcher";
     public static final String BOOTSTRAP_LAUNCHER_MAIN = "cpw.mods.bootstraplauncher.BootstrapLauncher";
-    public static final String FORGE_BOOTSTRAP_MAIN = "net.minecraftforge.bootstrap.ForgeBootstrap";
     public static final String NEO_FORGED_BOOTSTRAP_MAIN = "net.neoforged.fml.startup.Client";
 
     public static final Set<String> FORGE_OPTIFINE_MAIN = Set.of(
@@ -397,20 +339,13 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
             LibraryAnalyzer.LAUNCH_WRAPPER_MAIN,
             LibraryAnalyzer.MOD_LAUNCHER_MAIN,
             LibraryAnalyzer.BOOTSTRAP_LAUNCHER_MAIN,
-            LibraryAnalyzer.FORGE_BOOTSTRAP_MAIN,
             LibraryAnalyzer.NEO_FORGED_BOOTSTRAP_MAIN
     );
 
     public static final VersionRange<VersionNumber> FORGE_OPTIFINE_BROKEN_RANGE = VersionNumber.between("48.0.0", "49.0.50");
 
-    public static final String[] FORGE_TWEAKERS = new String[]{
-            "net.minecraftforge.legacy._1_5_2.LibraryFixerTweaker", // 1.5.2
-            "cpw.mods.fml.common.launcher.FMLTweaker", // 1.6.1 ~ 1.7.10
-            "net.minecraftforge.fml.common.launcher.FMLTweaker" // 1.8 ~ 1.12.2
-    };
     public static final String[] OPTIFINE_TWEAKERS = new String[]{
             "optifine.OptiFineTweaker",
             "optifine.OptiFineForgeTweaker"
     };
-    public static final String LITELOADER_TWEAKER = "com.mumfrey.liteloader.launch.LiteLoaderTweaker";
 }

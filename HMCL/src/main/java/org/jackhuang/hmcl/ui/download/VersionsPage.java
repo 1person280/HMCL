@@ -33,18 +33,11 @@ import javafx.scene.layout.*;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.VersionList;
-import org.jackhuang.hmcl.download.cleanroom.CleanroomRemoteVersion;
 import org.jackhuang.hmcl.download.fabric.FabricAPIRemoteVersion;
 import org.jackhuang.hmcl.download.fabric.FabricRemoteVersion;
-import org.jackhuang.hmcl.download.forge.ForgeRemoteVersion;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
-import org.jackhuang.hmcl.download.legacyfabric.LegacyFabricAPIRemoteVersion;
-import org.jackhuang.hmcl.download.legacyfabric.LegacyFabricRemoteVersion;
-import org.jackhuang.hmcl.download.liteloader.LiteLoaderRemoteVersion;
 import org.jackhuang.hmcl.download.neoforge.NeoForgeRemoteVersion;
 import org.jackhuang.hmcl.download.optifine.OptiFineRemoteVersion;
-import org.jackhuang.hmcl.download.quilt.QuiltAPIRemoteVersion;
-import org.jackhuang.hmcl.download.quilt.QuiltRemoteVersion;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -258,22 +251,12 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                 }
             } else {
                 VersionIconType iconType;
-                if (remoteVersion instanceof LiteLoaderRemoteVersion)
-                    iconType = VersionIconType.CHICKEN;
-                else if (remoteVersion instanceof OptiFineRemoteVersion)
+                if (remoteVersion instanceof OptiFineRemoteVersion)
                     iconType = VersionIconType.OPTIFINE;
-                else if (remoteVersion instanceof ForgeRemoteVersion)
-                    iconType = VersionIconType.FORGE;
-                else if (remoteVersion instanceof CleanroomRemoteVersion)
-                    iconType = VersionIconType.CLEANROOM;
                 else if (remoteVersion instanceof NeoForgeRemoteVersion)
                     iconType = VersionIconType.NEO_FORGE;
-                else if (remoteVersion instanceof LegacyFabricRemoteVersion || remoteVersion instanceof LegacyFabricAPIRemoteVersion)
-                    iconType = VersionIconType.LEGACY_FABRIC;
                 else if (remoteVersion instanceof FabricRemoteVersion || remoteVersion instanceof FabricAPIRemoteVersion)
                     iconType = VersionIconType.FABRIC;
-                else if (remoteVersion instanceof QuiltRemoteVersion || remoteVersion instanceof QuiltAPIRemoteVersion)
-                    iconType = VersionIconType.QUILT;
                 else
                     iconType = VersionIconType.COMMAND;
 
@@ -436,6 +419,16 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
         private void updateList() {
             Stream<RemoteVersion> versions = getSkinnable().versions.stream();
+
+            if ("game".equals(getSkinnable().libraryId)) {
+                versions = versions.filter(it -> {
+                    String gameVersion = it.getGameVersion();
+                    if (gameVersion != null) {
+                        return GameVersionNumber.compare(gameVersion, "1.20.5") >= 0;
+                    }
+                    return true;
+                });
+            }
 
             VersionTypeFilter filter = categoryField.getSelectionModel().getSelectedItem();
             if (filter != null)

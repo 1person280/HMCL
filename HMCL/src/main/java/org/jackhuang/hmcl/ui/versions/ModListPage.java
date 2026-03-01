@@ -137,33 +137,12 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                 ModLoaderType modLoaderType = type.getModLoaderType();
                 if (modLoaderType != null) {
                     supportedLoaders.add(modLoaderType);
-
-                    if (modLoaderType == ModLoaderType.CLEANROOM)
-                        supportedLoaders.add(ModLoaderType.FORGE);
                 }
             }
         }
 
-        if (analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE) && "1.20.1".equals(gameVersion)) {
-            supportedLoaders.add(ModLoaderType.FORGE);
-        }
-
-        if (analyzer.has(LibraryAnalyzer.LibraryType.QUILT)) {
-            supportedLoaders.add(ModLoaderType.FABRIC);
-        }
-
-        if (analyzer.has(LibraryAnalyzer.LibraryType.LEGACY_FABRIC)) {
-            supportedLoaders.add(ModLoaderType.FABRIC);
-        }
-
-        if (analyzer.has(LibraryAnalyzer.LibraryType.FABRIC) && modManager.hasMod("kilt", ModLoaderType.FABRIC)) {
-            supportedLoaders.add(ModLoaderType.FORGE);
-            supportedLoaders.add(ModLoaderType.NEO_FORGED);
-        }
-
         // Sinytra Connector
-        if (analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE) && modManager.hasMod("connectormod", ModLoaderType.NEO_FORGED)
-                || "1.20.1".equals(gameVersion) && analyzer.has(LibraryAnalyzer.LibraryType.FORGE) && modManager.hasMod("connectormod", ModLoaderType.FORGE)) {
+        if (analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE) && modManager.hasMod("connectormod", ModLoaderType.NEO_FORGED)) {
             supportedLoaders.add(ModLoaderType.FABRIC);
         }
     }

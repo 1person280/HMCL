@@ -20,7 +20,8 @@ package org.jackhuang.hmcl.mod;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.GameRepository;
-import org.jackhuang.hmcl.mod.modinfo.*;
+import org.jackhuang.hmcl.mod.modinfo.FabricModMetadata;
+import org.jackhuang.hmcl.mod.modinfo.PackMcMeta;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
@@ -46,17 +47,12 @@ public final class ModManager {
     static {
         var map = new HashMap<String, List<Pair<ModMetadataReader, ModLoaderType>>>();
         var zipReaders = List.<Pair<ModMetadataReader, ModLoaderType>>of(
-                pair(ForgeNewModMetadata::fromForgeFile, ModLoaderType.FORGE),
-                pair(ForgeNewModMetadata::fromNeoForgeFile, ModLoaderType.NEO_FORGED),
-                pair(ForgeOldModMetadata::fromFile, ModLoaderType.FORGE),
                 pair(FabricModMetadata::fromFile, ModLoaderType.FABRIC),
-                pair(QuiltModMetadata::fromFile, ModLoaderType.QUILT),
                 pair(PackMcMeta::fromFile, ModLoaderType.PACK)
         );
 
         map.put("zip", zipReaders);
         map.put("jar", zipReaders);
-        map.put("litemod", List.of(pair(LiteModMetadata::fromFile, ModLoaderType.LITE_LOADER)));
 
         READERS = map;
     }
@@ -105,7 +101,6 @@ public final class ModManager {
 
         List<Pair<ModMetadataReader, ModLoaderType>> readersMap = READERS.get(extension);
         if (readersMap == null) {
-            // Is not a mod file.
             return;
         }
 
@@ -161,7 +156,7 @@ public final class ModManager {
                     getLocalMod(fileNameWithoutExtension, ModLoaderType.UNKNOWN),
                     file,
                     fileNameWithoutExtension,
-                    new LocalModFile.Description("litemod".equals(extension) ? "LiteLoader Mod" : "")
+                    new LocalModFile.Description("")
             );
         }
 
@@ -176,21 +171,10 @@ public final class ModManager {
 
         analyzer = LibraryAnalyzer.analyze(getRepository().getResolvedPreservingPatchesVersion(id), null);
 
-        boolean supportSubfolders = analyzer.has(LibraryAnalyzer.LibraryType.FORGE)
-                || analyzer.has(LibraryAnalyzer.LibraryType.QUILT);
-
         if (Files.isDirectory(getModsDirectory())) {
             try (DirectoryStream<Path> modsDirectoryStream = Files.newDirectoryStream(getModsDirectory())) {
                 for (Path subitem : modsDirectoryStream) {
-                    if (supportSubfolders && Files.isDirectory(subitem) && !".connector".equalsIgnoreCase(subitem.getFileName().toString())) {
-                        try (DirectoryStream<Path> subitemDirectoryStream = Files.newDirectoryStream(subitem)) {
-                            for (Path subsubitem : subitemDirectoryStream) {
-                                addModInfo(subsubitem);
-                            }
-                        }
-                    } else {
-                        addModInfo(subitem);
-                    }
+                    addModInfo(subitem);
                 }
             }
         }
@@ -239,7 +223,6 @@ public final class ModManager {
             throw new IllegalArgumentException("Rolling back to an old path " + to.getFileName());
         }
         if (from.getFileName().equals(to.getFileName())) {
-            // We cannot roll back to the mod with the same name.
             return;
         }
 
@@ -295,7 +278,7 @@ public final class ModManager {
     }
 
     public Path disableMod(Path file) throws IOException {
-        if (isOld(file)) return file; // no need to disable an old mod.
+        if (isOld(file)) return file;
 
         String fileName = FileUtils.getName(file);
         if (fileName.endsWith(DISABLED_EXTENSION)) return file;
@@ -328,33 +311,20 @@ public final class ModManager {
 
     public static boolean isFileNameMod(Path file) {
         String name = getModName(file);
-        return name.endsWith(".zip") || name.endsWith(".jar") || name.endsWith(".litemod");
+        return name.endsWith(".zip") || name.endsWith(".jar");
     }
 
     public static boolean isFileMod(Path modFile) {
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile)) {
             if (Files.exists(fs.getPath("mcmod.info")) || Files.exists(fs.getPath("META-INF/mods.toml"))) {
-                // Forge mod
                 return true;
             }
 
             if (Files.exists(fs.getPath("fabric.mod.json"))) {
-                // Fabric mod
-                return true;
-            }
-
-            if (Files.exists(fs.getPath("quilt.mod.json"))) {
-                // Quilt mod
-                return true;
-            }
-
-            if (Files.exists(fs.getPath("litemod.json"))) {
-                // Liteloader mod
                 return true;
             }
 
             if (Files.exists(fs.getPath("pack.mcmeta"))) {
-                // resource pack, data pack
                 return true;
             }
 
@@ -364,12 +334,6 @@ public final class ModManager {
         }
     }
 
-    /**
-     * Check if "mods" directory has mod file named "fileName" no matter the mod is disabled or not
-     *
-     * @param fileName name of the file whose existence is being checked
-     * @return true if the file exists
-     */
     public boolean hasSimpleMod(String fileName) {
         return Files.exists(getModsDirectory().resolve(StringUtils.removeSuffix(fileName, DISABLED_EXTENSION)))
                 || Files.exists(getModsDirectory().resolve(StringUtils.addSuffix(fileName, DISABLED_EXTENSION)));

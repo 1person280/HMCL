@@ -35,6 +35,7 @@ import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Screen;
 import org.jackhuang.hmcl.game.GameDirectoryType;
+import org.jackhuang.hmcl.game.GarbageCollector;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ProcessPriority;
 import org.jackhuang.hmcl.game.Version;
@@ -94,6 +95,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private final MultiFileItem<GameDirectoryType> gameDirItem;
     private final MultiFileItem.FileOption<GameDirectoryType> gameDirCustomOption;
     private final LineSelectButton<ProcessPriority> processPriorityPane;
+    private final LineSelectButton<GarbageCollector> garbageCollectorPane;
     private final LineToggleButton showLogsPane;
     private final LineToggleButton enableDebugLogOutputPane;
     private final ImagePickerItem iconPickerItem;
@@ -405,6 +407,15 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             });
             processPriorityPane.setItems(ProcessPriority.values());
 
+            garbageCollectorPane = new LineSelectButton<>();
+            garbageCollectorPane.setTitle(i18n("settings.gc"));
+            garbageCollectorPane.setConverter(GarbageCollector::getDisplayName);
+            garbageCollectorPane.setDescriptionConverter(e -> {
+                String bundleKey = e.getDescriptionKey();
+                return I18n.hasKey(bundleKey) ? i18n(bundleKey) : null;
+            });
+            garbageCollectorPane.setItems(GarbageCollector.values());
+
             GridPane serverPane = new GridPane();
             {
                 ColumnConstraints title = new ColumnConstraints();
@@ -447,6 +458,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     javaSublist,
                     gameDirSublist,
                     maxMemoryPane,
+                    garbageCollectorPane,
                     launcherVisibilityPane,
                     dimensionPane,
                     showLogsPane,
@@ -529,6 +541,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             enableDebugLogOutputPane.selectedProperty().unbindBidirectional(lastVersionSetting.enableDebugLogOutputProperty());
             launcherVisibilityPane.valueProperty().unbindBidirectional(lastVersionSetting.launcherVisibilityProperty());
             processPriorityPane.valueProperty().unbindBidirectional(lastVersionSetting.processPriorityProperty());
+            garbageCollectorPane.valueProperty().unbindBidirectional(lastVersionSetting.garbageCollectorProperty());
 
             lastVersionSetting.usesGlobalProperty().removeListener(usesGlobalListener);
             lastVersionSetting.javaVersionTypeProperty().removeListener(javaListener);
@@ -567,6 +580,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         enableDebugLogOutputPane.selectedProperty().bindBidirectional(versionSetting.enableDebugLogOutputProperty());
         launcherVisibilityPane.valueProperty().bindBidirectional(versionSetting.launcherVisibilityProperty());
         processPriorityPane.valueProperty().bindBidirectional(versionSetting.processPriorityProperty());
+        garbageCollectorPane.valueProperty().bindBidirectional(versionSetting.garbageCollectorProperty());
 
         if (versionId != null)
             enableSpecificSettings.set(!versionSetting.isUsesGlobal());

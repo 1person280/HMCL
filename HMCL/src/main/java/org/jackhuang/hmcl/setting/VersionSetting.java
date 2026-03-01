@@ -603,6 +603,20 @@ public final class VersionSetting implements Cloneable, Observable {
         processPriorityProperty.set(processPriority);
     }
 
+    private final ObjectProperty<GarbageCollector> garbageCollectorProperty = new SimpleObjectProperty<>(this, "garbageCollector", GarbageCollector.DEFAULT);
+
+    public ObjectProperty<GarbageCollector> garbageCollectorProperty() {
+        return garbageCollectorProperty;
+    }
+
+    public GarbageCollector getGarbageCollector() {
+        return garbageCollectorProperty.get();
+    }
+
+    public void setGarbageCollector(GarbageCollector garbageCollector) {
+        garbageCollectorProperty.set(garbageCollector);
+    }
+
     private final ObjectProperty<Renderer> rendererProperty = new SimpleObjectProperty<>(this, "renderer", Renderer.DEFAULT);
 
     public Renderer getRenderer() {
@@ -794,6 +808,7 @@ public final class VersionSetting implements Cloneable, Observable {
             obj.addProperty("gameDir", src.getGameDir());
             obj.addProperty("launcherVisibility", src.getLauncherVisibility().ordinal());
             obj.addProperty("processPriority", src.getProcessPriority().ordinal());
+            obj.addProperty("garbageCollector", src.getGarbageCollector().name());
             obj.addProperty("useNativeGLFW", src.isUseNativeGLFW());
             obj.addProperty("useNativeOpenAL", src.isUseNativeOpenAL());
             obj.addProperty("gameDirType", src.getGameDirType().ordinal());
@@ -865,6 +880,7 @@ public final class VersionSetting implements Cloneable, Observable {
             vs.setEnableDebugLogOutput(Optional.ofNullable(obj.get("enableDebugLogOutput")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setLauncherVisibility(parseJsonPrimitive(obj.getAsJsonPrimitive("launcherVisibility"), LauncherVisibility.class, LauncherVisibility.HIDE));
             vs.setProcessPriority(parseJsonPrimitive(obj.getAsJsonPrimitive("processPriority"), ProcessPriority.class, ProcessPriority.NORMAL));
+            vs.setGarbageCollector(parseJsonPrimitive(obj.getAsJsonPrimitive("garbageCollector"), GarbageCollector.class, GarbageCollector.DEFAULT));
             vs.setUseNativeGLFW(Optional.ofNullable(obj.get("useNativeGLFW")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setUseNativeOpenAL(Optional.ofNullable(obj.get("useNativeOpenAL")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setGameDirType(parseJsonPrimitive(obj.getAsJsonPrimitive("gameDirType"), GameDirectoryType.class, GameDirectoryType.ROOT_FOLDER));

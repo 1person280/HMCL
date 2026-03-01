@@ -39,7 +39,6 @@ import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.ui.construct.ImageContainer;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.util.i18n.I18n;
-import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -94,12 +93,7 @@ public class InstallerItem extends Control {
         iconType = switch (id) {
             case "game" -> VersionIconType.GRASS;
             case "fabric", "fabric-api" -> VersionIconType.FABRIC;
-            case "legacyfabric", "legacyfabric-api" -> VersionIconType.LEGACY_FABRIC;
-            case "forge" -> VersionIconType.FORGE;
-            case "cleanroom" -> VersionIconType.CLEANROOM;
-            case "liteloader" -> VersionIconType.CHICKEN;
             case "optifine" -> VersionIconType.OPTIFINE;
-            case "quilt", "quilt-api" -> VersionIconType.QUILT;
             case "neoforge" -> VersionIconType.NEO_FORGE;
             default -> null;
         };
@@ -179,23 +173,13 @@ public class InstallerItem extends Control {
             game = new InstallerItem(MINECRAFT, style);
             InstallerItem fabric = new InstallerItem(FABRIC, style);
             InstallerItem fabricApi = new InstallerItem(FABRIC_API, style);
-            InstallerItem forge = new InstallerItem(FORGE, style);
-            InstallerItem cleanroom = new InstallerItem(CLEANROOM, style);
-            InstallerItem legacyfabric = new InstallerItem(LEGACY_FABRIC, style);
-            InstallerItem legacyfabricApi = new InstallerItem(LEGACY_FABRIC_API, style);
             InstallerItem neoForge = new InstallerItem(NEO_FORGE, style);
-            InstallerItem liteLoader = new InstallerItem(LITELOADER, style);
             InstallerItem optiFine = new InstallerItem(OPTIFINE, style);
-            InstallerItem quilt = new InstallerItem(QUILT, style);
-            InstallerItem quiltApi = new InstallerItem(QUILT_API, style);
 
             Map<InstallerItem, Set<InstallerItem>> incompatibleMap = new HashMap<>();
-            mutualIncompatible(incompatibleMap, forge, fabric, quilt, neoForge, cleanroom, legacyfabric);
-            addIncompatibles(incompatibleMap, liteLoader, fabric, quilt, neoForge, cleanroom, legacyfabric);
-            addIncompatibles(incompatibleMap, optiFine, fabric, quilt, neoForge, cleanroom, liteLoader, legacyfabric);
-            addIncompatibles(incompatibleMap, fabricApi, forge, quiltApi, neoForge, liteLoader, optiFine, cleanroom, legacyfabric, legacyfabricApi);
-            addIncompatibles(incompatibleMap, quiltApi, forge, fabric, fabricApi, neoForge, liteLoader, optiFine, cleanroom, legacyfabric, legacyfabricApi);
-            addIncompatibles(incompatibleMap, legacyfabricApi, forge, fabric, fabricApi, neoForge, liteLoader, optiFine, cleanroom, quilt, quiltApi);
+            mutualIncompatible(incompatibleMap, fabric, neoForge);
+            addIncompatibles(incompatibleMap, optiFine, fabric, neoForge);
+            addIncompatibles(incompatibleMap, fabricApi, neoForge, optiFine);
 
             for (Map.Entry<InstallerItem, Set<InstallerItem>> entry : incompatibleMap.entrySet()) {
                 InstallerItem item = entry.getKey();
@@ -229,7 +213,7 @@ public class InstallerItem extends Control {
                 game.versionProperty.set(new InstalledState(gameVersion, false, false));
             }
 
-            InstallerItem[] all = {game, forge, neoForge, liteLoader, optiFine, fabric, fabricApi, quilt, quiltApi, legacyfabric, legacyfabricApi, cleanroom};
+            InstallerItem[] all = {game, neoForge, optiFine, fabric, fabricApi};
 
             for (InstallerItem item : all) {
                 if (!item.resolvedStateProperty.isBound()) {
@@ -243,15 +227,7 @@ public class InstallerItem extends Control {
                 }
             }
 
-            if (gameVersion == null) {
-                this.libraries = all;
-            } else if (gameVersion.equals("1.12.2")) {
-                this.libraries = new InstallerItem[]{game, forge, cleanroom, liteLoader, legacyfabric, legacyfabricApi, optiFine};
-            } else if (GameVersionNumber.compare(gameVersion, "1.13.2") <= 0) {
-                this.libraries = new InstallerItem[]{game, forge, liteLoader, optiFine, legacyfabric, legacyfabricApi};
-            } else {
-                this.libraries = new InstallerItem[]{game, forge, neoForge, optiFine, fabric, fabricApi, quilt, quiltApi};
-            }
+            this.libraries = all;
         }
 
         public InstallerItem getGame() {

@@ -56,6 +56,7 @@ public class LaunchOptions implements Serializable {
     private NativesDirectoryType nativesDirType;
     private String nativesDir;
     private ProcessPriority processPriority = ProcessPriority.NORMAL;
+    private GarbageCollector garbageCollector = GarbageCollector.DEFAULT;
     private Renderer renderer = Renderer.DEFAULT;
     private boolean useNativeGLFW;
     private boolean useNativeOpenAL;
@@ -242,6 +243,13 @@ public class LaunchOptions implements Serializable {
      */
     public ProcessPriority getProcessPriority() {
         return processPriority;
+    }
+
+    /**
+     * Garbage collector
+     */
+    public GarbageCollector getGarbageCollector() {
+        return garbageCollector;
     }
 
     public Renderer getRenderer() {
@@ -432,6 +440,11 @@ public class LaunchOptions implements Serializable {
 
         public Builder setProcessPriority(@NotNull ProcessPriority processPriority) {
             options.processPriority = processPriority;
+            return this;
+        }
+
+        public Builder setGarbageCollector(@NotNull GarbageCollector garbageCollector) {
+            options.garbageCollector = garbageCollector;
             return this;
         }
 

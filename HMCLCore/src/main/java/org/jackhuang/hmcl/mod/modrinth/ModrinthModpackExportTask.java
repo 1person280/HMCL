@@ -159,14 +159,10 @@ public class ModrinthModpackExportTask extends Task<Void> {
             Map<String, String> dependencies = new HashMap<>();
             dependencies.put("minecraft", gameVersion);
 
-            analyzer.getVersion(FORGE).ifPresent(forgeVersion ->
-                    dependencies.put("forge", forgeVersion));
             analyzer.getVersion(NEO_FORGE).ifPresent(neoForgeVersion ->
                     dependencies.put("neoforge", neoForgeVersion));
             analyzer.getVersion(FABRIC).ifPresent(fabricVersion ->
                     dependencies.put("fabric-loader", fabricVersion));
-            analyzer.getVersion(QUILT).ifPresent(quiltVersion ->
-                    dependencies.put("quilt-loader", quiltVersion));
 
             ModrinthManifest manifest = new ModrinthManifest(
                     "minecraft",

@@ -53,11 +53,8 @@ public final class MultiMCComponents {
 
     static {
         ID_TYPE.put("net.minecraft", LibraryAnalyzer.LibraryType.MINECRAFT);
-        ID_TYPE.put("net.minecraftforge", LibraryAnalyzer.LibraryType.FORGE);
         ID_TYPE.put("net.neoforged", LibraryAnalyzer.LibraryType.NEO_FORGE);
-        ID_TYPE.put("com.mumfrey.liteloader", LibraryAnalyzer.LibraryType.LITELOADER);
         ID_TYPE.put("net.fabricmc.fabric-loader", LibraryAnalyzer.LibraryType.FABRIC);
-        ID_TYPE.put("org.quiltmc.quilt-loader", LibraryAnalyzer.LibraryType.QUILT);
     }
 
     private static final Map<LibraryAnalyzer.LibraryType, String> TYPE_ID =

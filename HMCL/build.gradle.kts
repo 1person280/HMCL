@@ -204,7 +204,7 @@ tasks.shadowJar {
     }
 
     manifest.attributes(
-        "Created-By" to "Copyright(c) 2013-2025 huangyuhui.",
+        "Created-By" to "Copyright(c) 2013-2025 huangyuhui. Third Party Edition by 不怎么玩MC的MC君.",
         "Implementation-Version" to project.version.toString(),
         "Main-Class" to "org.jackhuang.hmcl.Main",
         "Multi-Release" to "true",

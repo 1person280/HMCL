@@ -320,18 +320,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version, null);
                 if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FABRIC))
                     return VersionIconType.FABRIC.getIcon();
-                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.QUILT))
-                    return VersionIconType.QUILT.getIcon();
-                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.LEGACY_FABRIC))
-                    return VersionIconType.LEGACY_FABRIC.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE))
                     return VersionIconType.NEO_FORGE.getIcon();
-                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FORGE))
-                    return VersionIconType.FORGE.getIcon();
-                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM))
-                    return VersionIconType.CLEANROOM.getIcon();
-                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.LITELOADER))
-                    return VersionIconType.CHICKEN.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.OPTIFINE))
                     return VersionIconType.OPTIFINE.getIcon();
             }
@@ -430,6 +420,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 .setNativesDirType(vs.getNativesDirType())
                 .setNativesDir(vs.getNativesDir())
                 .setProcessPriority(vs.getProcessPriority())
+                .setGarbageCollector(vs.getGarbageCollector())
                 .setRenderer(vs.getRenderer())
                 .setEnableDebugLogOutput(vs.isEnableDebugLogOutput())
                 .setUseNativeGLFW(vs.isUseNativeGLFW())

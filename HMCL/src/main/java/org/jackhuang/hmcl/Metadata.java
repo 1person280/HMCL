@@ -34,8 +34,8 @@ public final class Metadata {
     private Metadata() {
     }
 
-    public static final String NAME = "HMCL";
-    public static final String FULL_NAME = "Hello Minecraft! Launcher";
+    public static final String NAME = "HMCL-TP";
+    public static final String FULL_NAME = "Hello Minecraft! Launcher: Third Party Edition";
     public static final String VERSION = System.getProperty("hmcl.version.override", JarUtils.getAttribute("hmcl.version", "@develop@"));
 
     public static final String TITLE = NAME + " " + VERSION;
@@ -54,7 +54,7 @@ public final class Metadata {
     public static final String CONTACT_URL = DOCS_URL + "/help.html";
     public static final String CHANGELOG_URL = DOCS_URL + "/changelog/";
     public static final String EULA_URL = DOCS_URL + "/eula/hmcl.html";
-    public static final String GROUPS_URL = "https://www.bilibili.com/opus/905435541874409529";
+    public static final String GROUPS_URL = "https://qm.qq.com/q/7VjzX3GhCU";
 
     public static final String BUILD_CHANNEL = JarUtils.getAttribute("hmcl.version.type", "nightly");
     public static final String GITHUB_SHA = JarUtils.getAttribute("hmcl.version.hash", null);

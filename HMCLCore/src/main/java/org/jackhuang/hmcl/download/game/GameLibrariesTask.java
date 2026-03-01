@@ -158,18 +158,6 @@ public final class GameLibrariesTask extends Task<Void> {
             }
 
             Path file = gameRepository.getLibraryFile(version, library);
-            if ("optifine".equals(library.getGroupId()) && Files.exists(file) && GameVersionNumber.asGameVersion(gameRepository.getGameVersion(version)).compareTo("1.20.4") == 0) {
-                String forgeVersion = LibraryAnalyzer.analyze(version, "1.20.4")
-                        .getVersion(LibraryAnalyzer.LibraryType.FORGE)
-                        .orElse(null);
-                if (forgeVersion != null && LibraryAnalyzer.FORGE_OPTIFINE_BROKEN_RANGE.contains(VersionNumber.asVersion(forgeVersion))) {
-                    try (FileSystem fs2 = CompressingUtils.createWritableZipFileSystem(file)) {
-                        Files.deleteIfExists(fs2.getPath("/META-INF/mods.toml"));
-                    } catch (IOException e) {
-                        throw new IOException("Cannot fix optifine", e);
-                    }
-                }
-            }
             if (shouldDownloadLibrary(gameRepository, version, library, integrityCheck) && (library.hasDownloadURL() || !"optifine".equals(library.getGroupId()))) {
                 dependencies.add(new LibraryDownloadTask(dependencyManager, file, library).withCounter("hmcl.install.libraries"));
             } else {

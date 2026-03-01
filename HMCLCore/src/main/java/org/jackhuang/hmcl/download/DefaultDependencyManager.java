@@ -17,8 +17,6 @@
  */
 package org.jackhuang.hmcl.download;
 
-import org.jackhuang.hmcl.download.cleanroom.CleanroomInstallTask;
-import org.jackhuang.hmcl.download.forge.ForgeInstallTask;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
@@ -184,17 +182,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         return Task
                 .composeAsync(() -> {
                     try {
-                        return CleanroomInstallTask.install(this, oldVersion, installer);
-                    } catch (IOException ignore) {
-                    }
-
-                    try {
                         return NeoForgeInstallTask.install(this, oldVersion, installer);
-                    } catch (IOException ignore) {
-                    }
-
-                    try {
-                        return ForgeInstallTask.install(this, oldVersion, installer);
                     } catch (IOException ignore) {
                     }
 
@@ -216,7 +204,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
      * Will try to remove libraries and patches.
      *
      * @param version not resolved version
-     * @param libraryId forge/liteloader/optifine/fabric
+     * @param libraryId forge/optifine/fabric
      * @return task to remove the specified library
      */
     public Task<Version> removeLibraryAsync(Version version, String libraryId) {

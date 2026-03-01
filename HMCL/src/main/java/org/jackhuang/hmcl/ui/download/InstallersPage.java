@@ -124,13 +124,8 @@ public class InstallersPage extends AbstractInstallersPage {
 
             if (libraryType != null) {
                 String loaderName = switch (libraryType) {
-                    case FORGE -> "forge";
                     case NEO_FORGE -> "neoforge";
-                    case CLEANROOM -> "cleanroom";
-                    case LEGACY_FABRIC -> "legacy_fabric";
                     case FABRIC -> "fabric";
-                    case LITELOADER -> "liteloader";
-                    case QUILT -> "quilt";
                     case OPTIFINE -> "optifine";
                     default -> null;
                 };

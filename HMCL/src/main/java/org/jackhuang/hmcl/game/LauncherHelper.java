@@ -144,6 +144,18 @@ public final class LauncherHelper {
         DefaultDependencyManager dependencyManager = profile.getDependency();
         AtomicReference<Version> version = new AtomicReference<>(MaintainTask.maintain(repository, repository.getResolvedVersion(selectedVersion)));
         Optional<String> gameVersion = repository.getGameVersion(version.get());
+
+        if (gameVersion.isPresent()) {
+            GameVersionNumber versionNumber = GameVersionNumber.asGameVersion(gameVersion.get());
+            if (versionNumber.compareTo("1.20.5") < 0) {
+                runLater(() -> {
+                    launchingStepsPane.fireEvent(new DialogCloseEvent());
+                    Controllers.dialog(i18n("launch.failed.version_too_old", "1.20.5"), i18n("message.error"), MessageType.ERROR);
+                });
+                return;
+            }
+        }
+
         boolean integrityCheck = repository.unmarkVersionLaunchedAbnormally(selectedVersion);
         CountDownLatch launchingLatch = new CountDownLatch(1);
         List<String> javaAgents = new ArrayList<>(0);
@@ -468,9 +480,7 @@ public final class LauncherHelper {
                         return result;
                     } else {
                         GameJavaVersion gameJavaVersion;
-                        if (violatedMandatoryConstraints.contains(JavaVersionConstraint.CLEANROOM_JAVA_21))
-                            gameJavaVersion = GameJavaVersion.JAVA_21;
-                        else if (violatedMandatoryConstraints.contains(JavaVersionConstraint.GAME_JSON))
+                        if (violatedMandatoryConstraints.contains(JavaVersionConstraint.GAME_JSON))
                             gameJavaVersion = version.getJavaVersion();
                         else if (violatedMandatoryConstraints.contains(JavaVersionConstraint.VANILLA))
                             gameJavaVersion = GameJavaVersion.getMinimumJavaVersion(gameVersion);
@@ -536,38 +546,14 @@ public final class LauncherHelper {
 
                 for (JavaVersionConstraint violatedSuggestedConstraint : violatedSuggestedConstraints) {
                     switch (violatedSuggestedConstraint) {
-                        case MODDED_JAVA_7:
-                            suggestions.add(i18n("launch.advice.java.modded_java_7"));
-                            break;
-                        case MODDED_JAVA_8:
-                            // Minecraft>=1.7.10+Forge accepts Java 8
-                            if (java.getParsedVersion() < 8)
-                                suggestions.add(i18n("launch.advice.newer_java"));
-                            else
-                                suggestions.add(i18n("launch.advice.modded_java", 8, gameVersion));
-                            break;
-                        case MODDED_JAVA_16:
-                            // Minecraft<=1.17.1+Forge[37.0.0,37.0.60) not compatible with Java 17
-                            String forgePatchVersion = analyzer.getVersion(LibraryAnalyzer.LibraryType.FORGE).orElse(null);
-                            if (forgePatchVersion != null && VersionNumber.compare(forgePatchVersion, "37.0.60") < 0)
-                                suggestions.add(i18n("launch.advice.forge37_0_60"));
-                            else
-                                suggestions.add(i18n("launch.advice.modded_java", 16, gameVersion));
-                            break;
                         case MODDED_JAVA_17:
                             suggestions.add(i18n("launch.advice.modded_java", 17, gameVersion));
                             break;
                         case MODDED_JAVA_21:
                             suggestions.add(i18n("launch.advice.modded_java", 21, gameVersion));
                             break;
-                        case CLEANROOM_JAVA_21:
-                            suggestions.add(i18n("launch.advice.cleanroom"));
-                            break;
                         case VANILLA_JAVA_8_51:
                             suggestions.add(i18n("launch.advice.java8_51_1_13"));
-                            break;
-                        case MODLAUNCHER_8:
-                            suggestions.add(i18n("launch.advice.modlauncher8"));
                             break;
                         case VANILLA_X86:
                             if (setting.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER
@@ -584,24 +570,6 @@ public final class LauncherHelper {
                 long totalMemorySizeMB = (long) MEGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize());
                 if (totalMemorySizeMB > 0 && totalMemorySizeMB < setting.getMaxMemory()) {
                     suggestions.add(i18n("launch.advice.not_enough_space", totalMemorySizeMB));
-                }
-
-                VersionNumber forgeVersion = analyzer.getVersion(LibraryAnalyzer.LibraryType.FORGE)
-                        .map(VersionNumber::asVersion)
-                        .orElse(null);
-
-                // Forge 2760~2773 will crash game with LiteLoader.
-                boolean hasForge2760 = forgeVersion != null && (forgeVersion.compareTo("1.12.2-14.23.5.2760") >= 0) && (forgeVersion.compareTo("1.12.2-14.23.5.2773") < 0);
-                boolean hasLiteLoader = version.getLibraries().stream().anyMatch(it -> it.is("com.mumfrey", "liteloader"));
-                if (hasForge2760 && hasLiteLoader && gameVersion.compareTo("1.12.2") == 0) {
-                    suggestions.add(i18n("launch.advice.forge2760_liteloader"));
-                }
-
-                // OptiFine 1.14.4 is not compatible with Forge 28.2.2 and later versions.
-                boolean hasForge28_2_2 = forgeVersion != null && (forgeVersion.compareTo("1.14.4-28.2.2") >= 0);
-                boolean hasOptiFine = version.getLibraries().stream().anyMatch(it -> it.is("optifine", "OptiFine"));
-                if (hasForge28_2_2 && hasOptiFine && gameVersion.compareTo("1.14.4") == 0) {
-                    suggestions.add(i18n("launch.advice.forge28_2_2_optifine"));
                 }
 
                 if (suggestions.isEmpty()) {

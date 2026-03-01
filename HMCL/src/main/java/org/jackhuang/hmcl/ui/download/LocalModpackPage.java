@@ -40,6 +40,7 @@ import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.nio.charset.Charset;
 import java.nio.file.Path;
@@ -125,6 +126,13 @@ public final class LocalModpackPage extends ModpackPage {
                         Controllers.dialog(i18n("modpack.task.install.error"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
                         Platform.runLater(controller::onEnd);
                     } else {
+                        String gameVersion = manifest.getGameVersion();
+                        if (gameVersion != null && GameVersionNumber.compare(gameVersion, "1.20.5") < 0) {
+                            Controllers.dialog(i18n("modpack.version_too_old", "1.20.5"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                            Platform.runLater(controller::onEnd);
+                            return;
+                        }
+
                         hideSpinner();
                         controller.getSettings().put(MODPACK_MANIFEST, manifest);
                         nameProperty.set(manifest.getName());

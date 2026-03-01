@@ -95,22 +95,12 @@ public class McbbsModpackExportTask extends Task<Void> {
             // Mcbbs manifest
             List<McbbsModpackManifest.Addon> addons = new ArrayList<>();
             addons.add(new McbbsModpackManifest.Addon(MINECRAFT.getPatchId(), gameVersion));
-            analyzer.getVersion(FORGE).ifPresent(forgeVersion ->
-                    addons.add(new McbbsModpackManifest.Addon(FORGE.getPatchId(), forgeVersion)));
-            analyzer.getVersion(CLEANROOM).ifPresent(cleanroomVersion ->
-                    addons.add(new McbbsModpackManifest.Addon(CLEANROOM.getPatchId(), cleanroomVersion)));
             analyzer.getVersion(NEO_FORGE).ifPresent(neoForgeVersion ->
                     addons.add(new McbbsModpackManifest.Addon(NEO_FORGE.getPatchId(), neoForgeVersion)));
-            analyzer.getVersion(LITELOADER).ifPresent(liteLoaderVersion ->
-                    addons.add(new McbbsModpackManifest.Addon(LITELOADER.getPatchId(), liteLoaderVersion)));
             analyzer.getVersion(OPTIFINE).ifPresent(optifineVersion ->
                     addons.add(new McbbsModpackManifest.Addon(OPTIFINE.getPatchId(), optifineVersion)));
             analyzer.getVersion(FABRIC).ifPresent(fabricVersion ->
                     addons.add(new McbbsModpackManifest.Addon(FABRIC.getPatchId(), fabricVersion)));
-            analyzer.getVersion(QUILT).ifPresent(quiltVersion ->
-                    addons.add(new McbbsModpackManifest.Addon(QUILT.getPatchId(), quiltVersion)));
-            analyzer.getVersion(LEGACY_FABRIC).ifPresent(legacyfabricVersion ->
-                    addons.add(new McbbsModpackManifest.Addon(LEGACY_FABRIC.getPatchId(), legacyfabricVersion)));
 
             List<Library> libraries = new ArrayList<>();
             // TODO libraries
@@ -126,10 +116,9 @@ public class McbbsModpackExportTask extends Task<Void> {
 
             // CurseForge manifest
             List<CurseManifestModLoader> modLoaders = new ArrayList<>();
-            analyzer.getVersion(FORGE).ifPresent(forgeVersion -> modLoaders.add(new CurseManifestModLoader("forge-" + forgeVersion, true)));
             analyzer.getVersion(NEO_FORGE).ifPresent(forgeVersion -> modLoaders.add(new CurseManifestModLoader("neoforge-" + forgeVersion, true)));
             analyzer.getVersion(FABRIC).ifPresent(fabricVersion -> modLoaders.add(new CurseManifestModLoader("fabric-" + fabricVersion, true)));
-            // OptiFine and LiteLoader are not supported by CurseForge modpack.
+            // OptiFine is not supported by CurseForge modpack.
             CurseManifest curseManifest = new CurseManifest(CurseManifest.MINECRAFT_MODPACK, 1, info.getName(), info.getVersion(), info.getAuthor(), "overrides", new CurseManifestMinecraft(gameVersion, modLoaders), Collections.emptyList());
             zip.putTextFile(JsonUtils.GSON.toJson(curseManifest), "manifest.json");
         }

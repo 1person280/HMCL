@@ -210,15 +210,26 @@ public class DefaultLauncher extends Launcher {
                 res.addUnstableDefault("UnlockExperimentalVMOptions", true);
                 res.addUnstableDefault("UnlockDiagnosticVMOptions", true);
 
-                // Using G1GC with its settings by default
-                if (javaVersion >= 8
-                        && res.noneMatch(arg -> "-XX:-UseG1GC".equals(arg) || (arg.startsWith("-XX:+Use") && arg.endsWith("GC")))) {
-                    res.addUnstableDefault("UseG1GC", true);
-                    res.addUnstableDefault("G1MixedGCCountTarget", "5");
-                    res.addUnstableDefault("G1NewSizePercent", "20");
-                    res.addUnstableDefault("G1ReservePercent", "20");
-                    res.addUnstableDefault("MaxGCPauseMillis", "50");
-                    res.addUnstableDefault("G1HeapRegionSize", "32m");
+                // Apply user-selected garbage collector
+                GarbageCollector gc = options.getGarbageCollector();
+                if (gc != null && gc != GarbageCollector.DEFAULT && gc.isAvailable(javaVersion)) {
+                    if (gc.getMainFlag() != null) {
+                        res.add(gc.getMainFlag());
+                    }
+                    for (String flag : gc.getAdditionalFlags()) {
+                        res.add(flag);
+                    }
+                } else {
+                    // Using G1GC with its settings by default
+                    if (javaVersion >= 8
+                            && res.noneMatch(arg -> "-XX:-UseG1GC".equals(arg) || (arg.startsWith("-XX:+Use") && arg.endsWith("GC")))) {
+                        res.addUnstableDefault("UseG1GC", true);
+                        res.addUnstableDefault("G1MixedGCCountTarget", "5");
+                        res.addUnstableDefault("G1NewSizePercent", "20");
+                        res.addUnstableDefault("G1ReservePercent", "20");
+                        res.addUnstableDefault("MaxGCPauseMillis", "50");
+                        res.addUnstableDefault("G1HeapRegionSize", "32m");
+                    }
                 }
 
                 res.addUnstableDefault("OmitStackTraceInFastThrow", false);
@@ -265,10 +276,6 @@ public class DefaultLauncher extends Launcher {
         }
 
         Set<String> classpath = repository.getClasspath(version);
-
-        if (analyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM)) {
-            classpath.removeIf(c -> c.contains("2.9.4-nightly-20150209"));
-        }
 
         Path jar = repository.getVersionJar(version);
         if (!Files.isRegularFile(jar))
@@ -588,29 +595,14 @@ public class DefaultLauncher extends Launcher {
             }
         }
 
-        if (analyzer.has(LibraryAnalyzer.LibraryType.FORGE)) {
-            env.put("INST_FORGE", "1");
-        }
-        if (analyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM)) {
-            env.put("INST_CLEANROOM", "1");
-        }
         if (analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE)) {
             env.put("INST_NEOFORGE", "1");
-        }
-        if (analyzer.has(LibraryAnalyzer.LibraryType.LITELOADER)) {
-            env.put("INST_LITELOADER", "1");
         }
         if (analyzer.has(LibraryAnalyzer.LibraryType.FABRIC)) {
             env.put("INST_FABRIC", "1");
         }
         if (analyzer.has(LibraryAnalyzer.LibraryType.OPTIFINE)) {
             env.put("INST_OPTIFINE", "1");
-        }
-        if (analyzer.has(LibraryAnalyzer.LibraryType.QUILT)) {
-            env.put("INST_QUILT", "1");
-        }
-        if (analyzer.has(LibraryAnalyzer.LibraryType.LEGACY_FABRIC)) {
-            env.put("INST_LEGACYFABRIC", "1");
         }
 
         env.putAll(options.getEnvironmentVariables());

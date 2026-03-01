@@ -58,18 +58,13 @@ public class VersionIconDialog extends DialogPane {
                 createCustomIcon(),
                 createIcon(VersionIconType.GRASS),
                 createIcon(VersionIconType.CHEST),
-                createIcon(VersionIconType.CHICKEN),
                 createIcon(VersionIconType.COMMAND),
                 createIcon(VersionIconType.APRIL_FOOLS),
                 createIcon(VersionIconType.OPTIFINE),
                 createIcon(VersionIconType.CRAFT_TABLE),
                 createIcon(VersionIconType.FABRIC),
-                createIcon(VersionIconType.LEGACY_FABRIC),
-                createIcon(VersionIconType.FORGE),
-                createIcon(VersionIconType.CLEANROOM),
                 createIcon(VersionIconType.NEO_FORGE),
-                createIcon(VersionIconType.FURNACE),
-                createIcon(VersionIconType.QUILT)
+                createIcon(VersionIconType.FURNACE)
         );
     }
 

@@ -53,18 +53,12 @@ public class FeedbackPage extends SpinnerPane {
             users.setTitle(i18n("contact.chat.qq_group"));
             users.setSubtitle(i18n("contact.chat.qq_group.statement"));
 
-            var discord = LineButton.createExternalLinkButton("https://discord.gg/jVvC7HfM6U");
-            discord.setLargeTitle(true);
-            discord.setLeading(FXUtils.newBuiltinImage("/assets/img/discord.png"));
-            discord.setTitle(i18n("contact.chat.discord"));
-            discord.setSubtitle(i18n("contact.chat.discord.statement"));
-
-            groups.getContent().setAll(users, discord);
+            groups.getContent().setAll(users);
         }
 
         ComponentList feedback = new ComponentList();
         {
-            var github = LineButton.createExternalLinkButton("https://github.com/HMCL-dev/HMCL/issues/new/choose");
+            var github = LineButton.createExternalLinkButton("https://github.com/1person280/HMCL");
             github.setLargeTitle(true);
             github.setTitle(i18n("contact.feedback.github"));
             github.setSubtitle(i18n("contact.feedback.github.statement"));

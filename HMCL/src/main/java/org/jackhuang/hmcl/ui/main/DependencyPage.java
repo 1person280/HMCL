@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2022  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,6 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -38,63 +37,19 @@ import java.io.InputStream;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class AboutPage extends StackPane {
+public final class DependencyPage extends StackPane {
 
     private final WeakListenerHolder holder = new WeakListenerHolder();
 
-    public AboutPage() {
-        ComponentList about = new ComponentList();
-        {
-            var launcher = LineButton.createExternalLinkButton("https://space.bilibili.com/3493264141322312");
-            launcher.setLargeTitle(true);
-            launcher.setLeading(FXUtils.newBuiltinImage("/assets/img/icon.png"));
-            launcher.setTitle("Hello Minecraft! Launcher: Third Party Edition");
-            launcher.setSubtitle(Metadata.VERSION);
-
-            var author = LineButton.createExternalLinkButton("https://space.bilibili.com/3493264141322312");
-            author.setLargeTitle(true);
-            author.setLeading(FXUtils.newBuiltinImage("/assets/img/yellow_fish.png"));
-            author.setTitle("不怎么玩MC的MC君");
-            author.setSubtitle(i18n("about.author.statement"));
-
-            about.getContent().setAll(launcher, author);
-        }
-
-        ComponentList thanks = loadIconedTwoLineList("/assets/about/thanks.json");
-
-        ComponentList legal = new ComponentList();
-        {
-            var copyright = LineButton.createExternalLinkButton(Metadata.ABOUT_URL);
-            copyright.setLargeTitle(true);
-            copyright.setTitle(i18n("about.copyright"));
-            copyright.setSubtitle(i18n("about.copyright.statement"));
-
-            var claim = LineButton.createExternalLinkButton(Metadata.EULA_URL);
-            claim.setLargeTitle(true);
-            claim.setTitle(i18n("about.claim"));
-            claim.setSubtitle(i18n("about.claim.statement"));
-
-            var openSource = LineButton.createExternalLinkButton("https://github.com/HMCL-dev/HMCL");
-            openSource.setLargeTitle(true);
-            openSource.setTitle(i18n("about.open_source"));
-            openSource.setSubtitle(i18n("about.open_source.statement"));
-
-            legal.getContent().setAll(copyright, claim, openSource);
-        }
+    public DependencyPage() {
+        ComponentList deps = loadIconedTwoLineList("/assets/about/deps.json");
 
         VBox content = new VBox(16);
         content.setPadding(new Insets(10));
         content.getChildren().setAll(
-                ComponentList.createComponentListTitle(i18n("about")),
-                about,
-
-                ComponentList.createComponentListTitle(i18n("about.thanks_to")),
-                thanks,
-
-                ComponentList.createComponentListTitle(i18n("about.legal")),
-                legal
+                ComponentList.createComponentListTitle(i18n("about.dependency")),
+                deps
         );
-
 
         ScrollPane scrollPane = new ScrollPane(content);
         scrollPane.setFitToWidth(true);
@@ -147,15 +102,22 @@ public final class AboutPage extends StackPane {
                     }
                 }
 
-                if (obj.get("title") instanceof JsonPrimitive title)
-                    button.setTitle(title.getAsString());
-                else if (obj.get("titleLocalized") instanceof JsonPrimitive titleLocalized)
-                    button.setTitle(i18n(titleLocalized.getAsString()));
+                String titleKey = obj.has("titleLocalized") ? obj.get("titleLocalized").getAsString() : null;
+                String subtitleKey = obj.has("subtitleLocalized") ? obj.get("subtitleLocalized").getAsString() : null;
+                String title = obj.has("title") ? obj.get("title").getAsString() : null;
+                String subtitle = obj.has("subtitle") ? obj.get("subtitle").getAsString() : null;
 
-                if (obj.get("subtitle") instanceof JsonPrimitive subtitle)
-                    button.setSubtitle(subtitle.getAsString());
-                else if (obj.get("subtitleLocalized") instanceof JsonPrimitive subtitleLocalized)
-                    button.setSubtitle(i18n(subtitleLocalized.getAsString()));
+                if (titleKey != null) {
+                    button.setTitle(i18n(titleKey));
+                } else if (title != null) {
+                    button.setTitle(title);
+                }
+
+                if (subtitleKey != null) {
+                    button.setSubtitle(i18n(subtitleKey));
+                } else if (subtitle != null) {
+                    button.setSubtitle(subtitle);
+                }
 
                 componentList.getContent().add(button);
             }

@@ -423,23 +423,13 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                     for (ModLoaderType modLoaderType : dataItem.getLoaders()) {
                         switch (modLoaderType) {
-                            case FORGE:
-                                content.addTag(i18n("install.installer.forge"));
-                                break;
-                            case CLEANROOM:
-                                content.addTag(i18n("install.installer.cleanroom"));
-                                break;
                             case NEO_FORGED:
                                 content.addTag(i18n("install.installer.neoforge"));
                                 break;
                             case FABRIC:
                                 content.addTag(i18n("install.installer.fabric"));
                                 break;
-                            case LITE_LOADER:
-                                content.addTag(i18n("install.installer.liteloader"));
-                                break;
-                            case QUILT:
-                                content.addTag(i18n("install.installer.quilt"));
+                            default:
                                 break;
                         }
                     }

@@ -53,7 +53,7 @@ public abstract class GameBuilder {
     }
 
     /**
-     * @param id the core library id. i.e. "forge", "liteloader", "optifine"
+     * @param id the core library id. i.e. "forge", "optifine"
      * @param version the version of the core library. For documents, you can first try [VersionList.versions]
      */
     public GameBuilder version(String id, String version) {

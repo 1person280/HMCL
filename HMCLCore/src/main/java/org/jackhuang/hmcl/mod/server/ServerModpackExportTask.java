@@ -89,18 +89,12 @@ public class ServerModpackExportTask extends Task<Void> {
             LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesVersion(versionId), gameVersion);
             List<ServerModpackManifest.Addon> addons = new ArrayList<>();
             addons.add(new ServerModpackManifest.Addon(MINECRAFT.getPatchId(), gameVersion));
-            analyzer.getVersion(FORGE).ifPresent(forgeVersion ->
-                    addons.add(new ServerModpackManifest.Addon(FORGE.getPatchId(), forgeVersion)));
             analyzer.getVersion(NEO_FORGE).ifPresent(neoForgeVersion ->
                     addons.add(new ServerModpackManifest.Addon(NEO_FORGE.getPatchId(), neoForgeVersion)));
-            analyzer.getVersion(LITELOADER).ifPresent(liteLoaderVersion ->
-                    addons.add(new ServerModpackManifest.Addon(LITELOADER.getPatchId(), liteLoaderVersion)));
             analyzer.getVersion(OPTIFINE).ifPresent(optifineVersion ->
                     addons.add(new ServerModpackManifest.Addon(OPTIFINE.getPatchId(), optifineVersion)));
             analyzer.getVersion(FABRIC).ifPresent(fabricVersion ->
                     addons.add(new ServerModpackManifest.Addon(FABRIC.getPatchId(), fabricVersion)));
-            analyzer.getVersion(QUILT).ifPresent(quiltVersion ->
-                    addons.add(new ServerModpackManifest.Addon(QUILT.getPatchId(), quiltVersion)));
             ServerModpackManifest manifest = new ServerModpackManifest(exportInfo.getName(), exportInfo.getAuthor(), exportInfo.getVersion(), exportInfo.getDescription(), StringUtils.removeSuffix(exportInfo.getFileApi(), "/"), files, addons);
             zip.putTextFile(JsonUtils.GSON.toJson(manifest), "server-manifest.json");
         }

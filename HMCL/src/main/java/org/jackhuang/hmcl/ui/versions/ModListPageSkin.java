@@ -469,13 +469,8 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                             FXUtils.runInFX(() -> {
                                 for (ModLoaderType modLoaderType : versionOptional.get().getLoaders()) {
                                     String loaderName = switch (modLoaderType) {
-                                        case FORGE -> i18n("install.installer.forge");
-                                        case CLEANROOM -> i18n("install.installer.cleanroom");
-                                        case LEGACY_FABRIC -> i18n("install.installer.legacyfabric");
                                         case NEO_FORGED -> i18n("install.installer.neoforge");
                                         case FABRIC -> i18n("install.installer.fabric");
-                                        case LITE_LOADER -> i18n("install.installer.liteloader");
-                                        case QUILT -> i18n("install.installer.quilt");
                                         default -> null;
                                     };
                                     if (loaderName == null)
@@ -639,13 +634,9 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             } else if (!ModListPageSkin.this.getSkinnable().supportedLoaders.contains(modLoaderType)) {
                 warning.add(i18n("mods.warning.loader_mismatch"));
                 switch (dataItem.getModInfo().getModLoaderType()) {
-                    case FORGE -> content.addTagWarning(i18n("install.installer.forge"));
-                    case LEGACY_FABRIC -> content.addTagWarning(i18n("install.installer.legacyfabric"));
-                    case CLEANROOM -> content.addTagWarning(i18n("install.installer.cleanroom"));
                     case NEO_FORGED -> content.addTagWarning(i18n("install.installer.neoforge"));
                     case FABRIC -> content.addTagWarning(i18n("install.installer.fabric"));
-                    case LITE_LOADER -> content.addTagWarning(i18n("install.installer.liteloader"));
-                    case QUILT -> content.addTagWarning(i18n("install.installer.quilt"));
+                    default -> {}
                 }
             }
 
