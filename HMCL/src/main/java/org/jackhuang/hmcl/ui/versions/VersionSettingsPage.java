@@ -259,7 +259,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 VBox.setMargin(chkAutoAllocate, new Insets(0, 0, 8, 5));
 
                 HBox lowerBoundPane = new HBox(8);
-                lowerBoundPane.setStyle("-fx-view-order: -1;"); // prevent the indicator from being covered by the progress bar
+                lowerBoundPane.setStyle("-fx-view-order: -1;");
                 lowerBoundPane.setAlignment(Pos.CENTER);
                 VBox.setMargin(lowerBoundPane, new Insets(0, 0, 0, 16));
                 {
@@ -272,28 +272,37 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                         }
                     }, chkAutoAllocate.selectedProperty()));
 
-                    JFXSlider slider = new JFXSlider(0, 1, 0);
+                    int maxMemoryGiB = (int) GIGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize());
+                    JFXSlider slider = new JFXSlider(1, Math.max(1, maxMemoryGiB), 1);
                     HBox.setMargin(slider, new Insets(0, 0, 0, 8));
                     HBox.setHgrow(slider, Priority.ALWAYS);
-                    slider.setValueFactory(self -> Bindings.createStringBinding(() -> (int) (self.getValue() * 100) + "%", self.valueProperty()));
+                    slider.setMajorTickUnit(1);
+                    slider.setMinorTickCount(0);
+                    slider.setSnapToTicks(true);
+                    slider.setValueFactory(self -> Bindings.createStringBinding(() -> (int) self.getValue() + " GiB", self.valueProperty()));
                     AtomicBoolean changedByTextField = new AtomicBoolean(false);
-                    FXUtils.onChangeAndOperate(maxMemory, maxMemory -> {
+                    FXUtils.onChangeAndOperate(maxMemory, memory -> {
                         changedByTextField.set(true);
-                        slider.setValue(maxMemory.intValue() * 1.0 / MEGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize()));
+                        int memoryGiB = Math.max(1, memory.intValue() / 1024);
+                        slider.setValue(memoryGiB);
                         changedByTextField.set(false);
                     });
                     slider.valueProperty().addListener((value, oldVal, newVal) -> {
                         if (changedByTextField.get()) return;
-                        maxMemory.set((int) (value.getValue().doubleValue() * MEGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize())));
+                        maxMemory.set((int) value.getValue().doubleValue() * 1024);
                     });
+
+                    IntegerProperty maxMemoryGiBProperty = new SimpleIntegerProperty();
+                    FXUtils.onChangeAndOperate(maxMemory, memory -> maxMemoryGiBProperty.set(Math.max(1, memory.intValue() / 1024)));
+                    maxMemoryGiBProperty.addListener((obs, oldVal, newVal) -> maxMemory.set(newVal.intValue() * 1024));
 
                     JFXTextField txtMaxMemory = new JFXTextField();
                     FXUtils.setLimitWidth(txtMaxMemory, 60);
                     FXUtils.setValidateWhileTextChanged(txtMaxMemory, true);
-                    txtMaxMemory.textProperty().bindBidirectional(maxMemory, SafeStringConverter.fromInteger());
+                    txtMaxMemory.textProperty().bindBidirectional(maxMemoryGiBProperty, SafeStringConverter.fromInteger());
                     txtMaxMemory.setValidators(new NumberValidator(i18n("input.number"), false));
 
-                    lowerBoundPane.getChildren().setAll(label, slider, txtMaxMemory, new Label(i18n("settings.memory.unit.mib")));
+                    lowerBoundPane.getChildren().setAll(label, slider, txtMaxMemory, new Label(i18n("settings.memory.unit.gib")));
                 }
 
                 StackPane progressBarPane = new StackPane();
