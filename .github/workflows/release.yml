@@ -22,10 +22,9 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '25'
-          java-package: 'jdk+fx'
+          java-version: '21'
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v3
       - name: Get version from tag
         run: |
           if [[ $GITHUB_REF == refs/tags/* ]]; then
@@ -41,6 +40,8 @@ jobs:
         env:
           BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
           VERSION_ROOT: ${{ env.VERSION }}
+      - name: List build files
+        run: ls -la HMCL/build/libs/
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -64,6 +65,8 @@ jobs:
         with:
           name: HMCL-build
           path: ./artifacts
+      - name: List artifacts
+        run: ls -la artifacts/
       - name: Get version from tag
         run: |
           if [[ $GITHUB_REF == refs/tags/* ]]; then
@@ -75,12 +78,19 @@ jobs:
       - name: Create Release
         run: |
           cd artifacts
+          ls -la
           gh release create "${{ github.ref_name }}" \
             HMCL-${{ env.VERSION }}.jar \
             HMCL-${{ env.VERSION }}.exe \
             HMCL-${{ env.VERSION }}.sh \
             --title "HMCL ${{ env.VERSION }}" \
-            --notes "更新内容请查看更新日志" \
-            --draft false
+            --notes "更新日志：
+1. UI小调整
+2. 修复了第三方版本显示为旧作者头像问题
+3. 恢复了自动更新功能
+4. 更新源改为GitHub Releases
+5. Windows用户可自主选择jar或exe，macOS/Linux用jar
+6. 弹窗显示最新版本和更新日志
+7. 更新后旧的jar/exe剪切到backup文件夹"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
