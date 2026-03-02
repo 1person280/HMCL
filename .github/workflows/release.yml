@@ -21,8 +21,9 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: '21'
+          distribution: 'zulu'
+          java-version: '17'
+          java-package: 'jdk+fx'
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
       - name: Get version from tag
