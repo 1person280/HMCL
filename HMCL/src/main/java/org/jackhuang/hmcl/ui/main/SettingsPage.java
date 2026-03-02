@@ -26,6 +26,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.setting.CloseWindowBehavior;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -113,6 +114,25 @@ public final class SettingsPage extends ScrollPane {
                 chooseLanguagePane.valueProperty().bindBidirectional(config().localizationProperty());
 
                 settingsPane.getContent().add(chooseLanguagePane);
+            }
+
+            {
+                LineToggleButton autoCheckUpdatePane = new LineToggleButton();
+                autoCheckUpdatePane.setTitle(i18n("settings.launcher.auto_check_update"));
+                autoCheckUpdatePane.selectedProperty().bindBidirectional(config().autoCheckUpdateProperty());
+
+                settingsPane.getContent().add(autoCheckUpdatePane);
+            }
+
+            {
+                var closeWindowBehaviorPane = new LineSelectButton<CloseWindowBehavior>();
+                closeWindowBehaviorPane.setTitle(i18n("settings.launcher.close_window_behavior"));
+                closeWindowBehaviorPane.setConverter(behavior -> i18n("settings.launcher.close_window_behavior." + behavior.name().toLowerCase()));
+
+                closeWindowBehaviorPane.setItems(CloseWindowBehavior.values());
+                closeWindowBehaviorPane.valueProperty().bindBidirectional(config().closeWindowBehaviorProperty());
+
+                settingsPane.getContent().add(closeWindowBehaviorPane);
             }
 
             {

@@ -222,6 +222,21 @@ public final class Config extends ObservableSetting {
         this.acceptPreviewUpdate.set(acceptPreviewUpdate);
     }
 
+    @SerializedName("autoCheckUpdate")
+    private final BooleanProperty autoCheckUpdate = new SimpleBooleanProperty(true);
+
+    public BooleanProperty autoCheckUpdateProperty() {
+        return autoCheckUpdate;
+    }
+
+    public boolean isAutoCheckUpdate() {
+        return autoCheckUpdate.get();
+    }
+
+    public void setAutoCheckUpdate(boolean autoCheckUpdate) {
+        this.autoCheckUpdate.set(autoCheckUpdate);
+    }
+
     @SerializedName("shownTips")
     private final ObservableMap<String, Object> shownTips = FXCollections.observableHashMap();
 
@@ -657,6 +672,21 @@ public final class Config extends ObservableSetting {
 
     public void setDisableAutoGameOptions(boolean disableAutoGameOptions) {
         this.disableAutoGameOptions.set(disableAutoGameOptions);
+    }
+
+    @SerializedName("closeWindowBehavior")
+    private final ObjectProperty<CloseWindowBehavior> closeWindowBehavior = new SimpleObjectProperty<>(CloseWindowBehavior.CLOSE_WINDOW);
+
+    public ObjectProperty<CloseWindowBehavior> closeWindowBehaviorProperty() {
+        return closeWindowBehavior;
+    }
+
+    public CloseWindowBehavior getCloseWindowBehavior() {
+        return closeWindowBehavior.get();
+    }
+
+    public void setCloseWindowBehavior(CloseWindowBehavior closeWindowBehavior) {
+        this.closeWindowBehavior.set(closeWindowBehavior);
     }
 
     // Accounts
