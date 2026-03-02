@@ -570,31 +570,6 @@ public class DefaultLauncher extends Launcher {
         env.put("INST_MC_DIR", FileUtils.getAbsolutePath(repository.getRunDirectory(version.getId())));
         env.put("INST_JAVA", options.getJava().getBinary().toString());
 
-        Renderer renderer = options.getRenderer();
-        if (renderer != Renderer.DEFAULT) {
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                if (renderer != Renderer.LLVMPIPE)
-                    env.put("GALLIUM_DRIVER", renderer.name().toLowerCase(Locale.ROOT));
-            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
-                env.put("__GLX_VENDOR_LIBRARY_NAME", "mesa");
-                switch (renderer) {
-                    case LLVMPIPE:
-                        env.put("LIBGL_ALWAYS_SOFTWARE", "1");
-                        break;
-                    case ZINK:
-                        env.put("MESA_LOADER_DRIVER_OVERRIDE", "zink");
-                        /*
-                         * The amdgpu DDX is missing support for modifiers, causing Zink to fail.
-                         * Disable DRI3 to workaround this issue.
-                         *
-                         * Link: https://gitlab.freedesktop.org/mesa/mesa/-/issues/10093
-                         */
-                        env.put("LIBGL_KOPPER_DRI2", "1");
-                        break;
-                }
-            }
-        }
-
         if (analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE)) {
             env.put("INST_NEOFORGE", "1");
         }

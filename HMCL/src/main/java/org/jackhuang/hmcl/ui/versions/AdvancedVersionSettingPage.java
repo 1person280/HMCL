@@ -9,13 +9,11 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.game.NativesDirectoryType;
-import org.jackhuang.hmcl.game.Renderer;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
@@ -23,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.FileSystems;
 import java.util.Arrays;
-import java.util.Locale;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -52,7 +49,6 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
     private final ComponentSublist nativesDirSublist;
     private final MultiFileItem<NativesDirectoryType> nativesDirItem;
     private final MultiFileItem.FileOption<NativesDirectoryType> nativesDirCustomOption;
-    private final LineSelectButton<Renderer> rendererPane;
 
     public AdvancedVersionSettingPage(Profile profile, @Nullable String versionId, VersionSetting versionSetting) {
         this.profile = profile;
@@ -168,15 +164,6 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
             nativesDirHint.setText(i18n("settings.advanced.natives_directory.hint"));
             nativesDirItem.getChildren().add(nativesDirHint);
 
-            rendererPane = new LineSelectButton<>();
-            rendererPane.setTitle(i18n("settings.advanced.renderer"));
-            rendererPane.setConverter(e -> i18n("settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT)));
-            rendererPane.setDescriptionConverter(e -> {
-                String bundleKey = "settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT) + ".desc";
-                return I18n.hasKey(bundleKey) ? i18n(bundleKey) : null;
-            });
-            rendererPane.setItems(Renderer.values());
-
             noJVMArgsPane = new LineToggleButton();
             noJVMArgsPane.setTitle(i18n("settings.advanced.no_jvm_args"));
 
@@ -200,7 +187,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
             useNativeOpenALPane.setTitle(i18n("settings.advanced.use_native_openal"));
 
             workaroundPane.getContent().setAll(
-                    nativesDirSublist, rendererPane, noJVMArgsPane, noOptimizingJVMArgsPane, noGameCheckPane,
+                    nativesDirSublist, noJVMArgsPane, noOptimizingJVMArgsPane, noGameCheckPane,
                     noJVMCheckPane, noNativesPatchPane
             );
 
@@ -232,7 +219,6 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
         FXUtils.bindString(txtWrapper, versionSetting.wrapperProperty());
         FXUtils.bindString(txtPreLaunchCommand, versionSetting.preLaunchCommandProperty());
         FXUtils.bindString(txtPostExitCommand, versionSetting.postExitCommandProperty());
-        rendererPane.valueProperty().bindBidirectional(versionSetting.rendererProperty());
         noGameCheckPane.selectedProperty().bindBidirectional(versionSetting.notCheckGameProperty());
         noJVMCheckPane.selectedProperty().bindBidirectional(versionSetting.notCheckJVMProperty());
         noJVMArgsPane.selectedProperty().bindBidirectional(versionSetting.noJVMArgsProperty());
@@ -274,7 +260,6 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
         FXUtils.unbind(txtWrapper, versionSetting.wrapperProperty());
         FXUtils.unbind(txtPreLaunchCommand, versionSetting.preLaunchCommandProperty());
         FXUtils.unbind(txtPostExitCommand, versionSetting.postExitCommandProperty());
-        rendererPane.valueProperty().unbindBidirectional(versionSetting.rendererProperty());
         noGameCheckPane.selectedProperty().unbindBidirectional(versionSetting.notCheckGameProperty());
         noJVMCheckPane.selectedProperty().unbindBidirectional(versionSetting.notCheckJVMProperty());
         noJVMArgsPane.selectedProperty().unbindBidirectional(versionSetting.noJVMArgsProperty());

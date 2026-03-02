@@ -57,7 +57,6 @@ public class LaunchOptions implements Serializable {
     private String nativesDir;
     private ProcessPriority processPriority = ProcessPriority.NORMAL;
     private GarbageCollector garbageCollector = GarbageCollector.DEFAULT;
-    private Renderer renderer = Renderer.DEFAULT;
     private boolean useNativeGLFW;
     private boolean useNativeOpenAL;
     private boolean enableDebugLogOutput;
@@ -252,10 +251,6 @@ public class LaunchOptions implements Serializable {
         return garbageCollector;
     }
 
-    public Renderer getRenderer() {
-        return renderer;
-    }
-
     public boolean isUseNativeGLFW() {
         return useNativeGLFW;
     }
@@ -445,11 +440,6 @@ public class LaunchOptions implements Serializable {
 
         public Builder setGarbageCollector(@NotNull GarbageCollector garbageCollector) {
             options.garbageCollector = garbageCollector;
-            return this;
-        }
-
-        public Builder setRenderer(@NotNull Renderer renderer) {
-            options.renderer = renderer;
             return this;
         }
 

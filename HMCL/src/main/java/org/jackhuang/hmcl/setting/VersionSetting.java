@@ -617,20 +617,6 @@ public final class VersionSetting implements Cloneable, Observable {
         garbageCollectorProperty.set(garbageCollector);
     }
 
-    private final ObjectProperty<Renderer> rendererProperty = new SimpleObjectProperty<>(this, "renderer", Renderer.DEFAULT);
-
-    public Renderer getRenderer() {
-        return rendererProperty.get();
-    }
-
-    public ObjectProperty<Renderer> rendererProperty() {
-        return rendererProperty;
-    }
-
-    public void setRenderer(Renderer renderer) {
-        this.rendererProperty.set(renderer);
-    }
-
     private final BooleanProperty useNativeGLFW = new SimpleBooleanProperty(this, "nativeGLFW", false);
 
     public boolean isUseNativeGLFW() {
@@ -835,10 +821,6 @@ public final class VersionSetting implements Cloneable, Observable {
             }
             obj.addProperty("java", java);
 
-            obj.addProperty("renderer", src.getRenderer().name());
-            if (src.getRenderer() == Renderer.LLVMPIPE)
-                obj.addProperty("useSoftwareRenderer", true);
-
             return obj;
         }
 
@@ -908,18 +890,6 @@ public final class VersionSetting implements Cloneable, Observable {
                         vs.setJavaVersion(java);
                 }
             }
-
-            vs.setRenderer(Optional.ofNullable(obj.get("renderer")).map(JsonElement::getAsString)
-                    .flatMap(name -> {
-                        try {
-                            return Optional.of(Renderer.valueOf(name.toUpperCase(Locale.ROOT)));
-                        } catch (IllegalArgumentException ignored) {
-                            return Optional.empty();
-                        }
-                    }).orElseGet(() -> {
-                        boolean useSoftwareRenderer = Optional.ofNullable(obj.get("useSoftwareRenderer")).map(JsonElement::getAsBoolean).orElse(false);
-                        return useSoftwareRenderer ? Renderer.LLVMPIPE : Renderer.DEFAULT;
-                    }));
 
             return vs;
         }
