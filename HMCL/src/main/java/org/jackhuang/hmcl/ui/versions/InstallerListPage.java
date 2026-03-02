@@ -76,7 +76,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
 
             InstallerItem.InstallerItemGroup group = new InstallerItem.InstallerItemGroup(gameVersion, InstallerItem.Style.LIST_ITEM);
 
-            // Conventional libraries: game, fabric, legacyfabric, forge, cleanroom, neoforge, liteloader, optifine
+            // Conventional libraries: game, fabric, legacyfabric, forge, neoforge, liteloader, optifine
             for (InstallerItem item : group.getLibraries()) {
                 String libraryId = item.getLibraryId();
 

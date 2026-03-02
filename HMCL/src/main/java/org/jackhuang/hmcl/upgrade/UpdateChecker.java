@@ -86,15 +86,11 @@ public final class UpdateChecker {
     }
 
     private static RemoteVersion checkUpdate(UpdateChannel channel, boolean preview) throws IOException {
-        if (!IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK && !IntegrityChecker.isSelfVerified()) {
-            throw new IOException("Self verification failed");
-        }
-
         var query = new LinkedHashMap<String, String>();
         query.put("version", Metadata.VERSION);
         query.put("channel", preview ? channel.channelName + "-preview" : channel.channelName);
 
-        String url = NetworkUtils.withQuery(Metadata.HMCL_UPDATE_URL, query);
+        String url = Metadata.HMCL_UPDATE_URL;
         return RemoteVersion.fetch(channel, preview, url);
     }
 

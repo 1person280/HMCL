@@ -423,7 +423,6 @@ public final class TaskListPane extends StackPane {
                 case "hmcl.install.libraries" ->        i18n("libraries.download");
                 case "hmcl.install.game" ->             i18n("install.installer.install", i18n("install.installer.game") + " " + stageValue);
                 case "hmcl.install.forge" ->            i18n("install.installer.install", i18n("install.installer.forge") + " " + stageValue);
-                case "hmcl.install.cleanroom" ->        i18n("install.installer.install", i18n("install.installer.cleanroom") + " " + stageValue);
                 case "hmcl.install.neoforge" ->         i18n("install.installer.install", i18n("install.installer.neoforge") + " " + stageValue);
                 case "hmcl.install.liteloader" ->       i18n("install.installer.install", i18n("install.installer.liteloader") + " " + stageValue);
                 case "hmcl.install.optifine" ->         i18n("install.installer.install", i18n("install.installer.optifine") + " " + stageValue);

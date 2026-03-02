@@ -48,7 +48,7 @@ public final class AboutPage extends StackPane {
             var launcher = LineButton.createExternalLinkButton("https://space.bilibili.com/3493264141322312");
             launcher.setLargeTitle(true);
             launcher.setLeading(FXUtils.newBuiltinImage("/assets/img/icon.png"));
-            launcher.setTitle("Hello Minecraft! Launcher: Third Party Edition");
+            launcher.setTitle(Metadata.FULL_NAME);
             launcher.setSubtitle(Metadata.VERSION);
 
             var author = LineButton.createExternalLinkButton("https://space.bilibili.com/3493264141322312");
@@ -74,7 +74,7 @@ public final class AboutPage extends StackPane {
             claim.setTitle(i18n("about.claim"));
             claim.setSubtitle(i18n("about.claim.statement"));
 
-            var openSource = LineButton.createExternalLinkButton("https://github.com/HMCL-dev/HMCL");
+            var openSource = LineButton.createExternalLinkButton(Metadata.GITHUB_REPO);
             openSource.setLargeTitle(true);
             openSource.setTitle(i18n("about.open_source"));
             openSource.setSubtitle(i18n("about.open_source.statement"));

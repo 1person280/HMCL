@@ -26,9 +26,9 @@ final class HMCLDownloadTask extends FileDownloadTask {
 
     private final RemoteVersion.Type archiveFormat;
 
-    public HMCLDownloadTask(RemoteVersion version, Path target) {
-        super(version.getUrl(), target, version.getIntegrityCheck());
-        archiveFormat = version.getType();
+    public HMCLDownloadTask(RemoteVersion.DownloadInfo downloadInfo, Path target) {
+        super(downloadInfo.getUrl(), target, null);
+        this.archiveFormat = downloadInfo.getType();
     }
 
     @Override
@@ -39,6 +39,7 @@ final class HMCLDownloadTask extends FileDownloadTask {
             Path target = getPath();
             switch (archiveFormat) {
                 case JAR:
+                case EXE:
                     break;
                 default:
                     throw new IllegalArgumentException("Unknown format: " + archiveFormat);

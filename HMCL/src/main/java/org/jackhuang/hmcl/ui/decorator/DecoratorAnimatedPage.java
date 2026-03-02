@@ -30,6 +30,7 @@ public class DecoratorAnimatedPage extends Control {
 
     protected final VBox left = new VBox();
     protected final StackPane center = new StackPane();
+    protected final VBox bottom = new VBox();
 
     {
         getStyleClass().add("gray-background");
@@ -43,12 +44,20 @@ public class DecoratorAnimatedPage extends Control {
         center.getChildren().setAll(children);
     }
 
+    protected void setBottom(Node... children) {
+        bottom.getChildren().setAll(children);
+    }
+
     public VBox getLeft() {
         return left;
     }
 
     public StackPane getCenter() {
         return center;
+    }
+
+    public VBox getBottom() {
+        return bottom;
     }
 
     @Override
@@ -65,6 +74,7 @@ public class DecoratorAnimatedPage extends Control {
             pane.setLeft(control.left);
             FXUtils.setLimitWidth(control.left, 200);
             pane.setCenter(control.center);
+            pane.setBottom(control.bottom);
             getChildren().setAll(pane);
         }
 
@@ -74,6 +84,10 @@ public class DecoratorAnimatedPage extends Control {
 
         protected void setCenter(Node... children) {
             getSkinnable().setCenter(children);
+        }
+
+        protected void setBottom(Node... children) {
+            getSkinnable().setBottom(children);
         }
 
     }

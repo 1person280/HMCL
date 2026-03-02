@@ -17,9 +17,15 @@
  */
 package org.jackhuang.hmcl.ui.main;
 
+import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXPopup;
 import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.Label;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
@@ -31,7 +37,6 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.terracotta.TerracottaMetadata;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -49,12 +54,14 @@ import org.jackhuang.hmcl.ui.nbt.NBTFileType;
 import org.jackhuang.hmcl.ui.versions.GameAdvancedListItem;
 import org.jackhuang.hmcl.ui.versions.GameListPopupMenu;
 import org.jackhuang.hmcl.ui.versions.Versions;
+import org.jackhuang.hmcl.upgrade.RemoteVersion;
+import org.jackhuang.hmcl.upgrade.UpdateChannel;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
+import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
-import org.jackhuang.hmcl.util.platform.*;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.nio.file.Files;
@@ -65,6 +72,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
 
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -189,41 +197,6 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                 FXUtils.prepareOnMouseEnter(downloadItem, Controllers::prepareDownloadPage);
             }
 
-            // fifth item in left sidebar
-            AdvancedListItem launcherSettingsItem = new AdvancedListItem();
-            launcherSettingsItem.setLeftIcon(SVG.SETTINGS);
-            launcherSettingsItem.setTitle(i18n("settings"));
-            launcherSettingsItem.setOnAction(e -> {
-                Controllers.getSettingsPage().showGameSettings(Profiles.getSelectedProfile());
-                Controllers.navigate(Controllers.getSettingsPage());
-            });
-            if (AnimationUtils.isAnimationEnabled()) {
-                FXUtils.prepareOnMouseEnter(launcherSettingsItem, Controllers::prepareSettingsPage);
-            }
-
-            // sixth item in left sidebar
-            AdvancedListItem terracottaItem = new AdvancedListItem();
-            terracottaItem.setLeftIcon(SVG.GRAPH2);
-            terracottaItem.setTitle(i18n("terracotta"));
-            terracottaItem.setOnAction(e -> {
-                if (TerracottaMetadata.PROVIDER != null) {
-                    Controllers.navigate(Controllers.getTerracottaPage());
-                } else {
-                    String message;
-                    if (Architecture.SYSTEM_ARCH.getBits() == Bits.BIT_32)
-                        message = i18n("terracotta.unsupported.arch.32bit");
-                    else if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
-                            && !OperatingSystem.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_10))
-                        message = i18n("terracotta.unsupported.os.windows.old");
-                    else if (Platform.SYSTEM_PLATFORM.equals(OperatingSystem.LINUX, Architecture.LOONGARCH64_OW))
-                        message = i18n("terracotta.unsupported.arch.loongarch64_ow");
-                    else
-                        message = i18n("terracotta.unsupported");
-
-                    Controllers.dialog(message, null, MessageDialogPane.MessageType.WARNING);
-                }
-            });
-
             // the left sidebar
             AdvancedListBox sideBar = new AdvancedListBox()
                     .startCategory(i18n("account").toUpperCase(Locale.ROOT))
@@ -231,18 +204,122 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                     .startCategory(i18n("version").toUpperCase(Locale.ROOT))
                     .add(gameListItem)
                     .add(gameItem)
-                    .add(downloadItem)
-                    .startCategory(i18n("settings.launcher.general").toUpperCase(Locale.ROOT))
-                    .add(launcherSettingsItem)
-                    .add(terracottaItem)
-                    .addNavigationDrawerItem(i18n("contact.chat"), SVG.CHAT, () -> {
-                        Controllers.getSettingsPage().showFeedback();
-                        Controllers.navigate(Controllers.getSettingsPage());
-                    });
+                    .add(downloadItem);
 
-            // the root page, with the sidebar in left, navigator in center.
+            // bottom toolbar with settings, multiplayer, and developer group icons
+            HBox bottomToolBar = createBottomToolBar();
+            FXUtils.setLimitWidth(bottomToolBar, 200);
+
+            // the root page, with the sidebar in left, navigator in center, bottom toolbar in bottom.
             setLeft(sideBar);
             setCenter(getSkinnable().getMainPage());
+            setBottom(bottomToolBar);
+        }
+
+        private HBox createBottomToolBar() {
+            HBox toolBar = new HBox();
+            toolBar.setAlignment(Pos.CENTER);
+            toolBar.setPadding(new Insets(8, 4, 8, 4));
+            toolBar.setSpacing(4);
+            toolBar.getStyleClass().add("gray-background");
+
+            // Settings button
+            VBox settingsBox = createToolButton(SVG.SETTINGS, i18n("settings"), () -> {
+                Controllers.getSettingsPage().showGameSettings(Profiles.getSelectedProfile());
+                Controllers.navigate(Controllers.getSettingsPage());
+            });
+            HBox.setHgrow(settingsBox, javafx.scene.layout.Priority.ALWAYS);
+
+            // Multiplayer button (using PUBLIC icon for multiplayer)
+            VBox multiplayerBox = createToolButton(SVG.PUBLIC, i18n("multiplayer"), () -> {
+                Controllers.navigate(Controllers.getTerracottaPage());
+            });
+            HBox.setHgrow(multiplayerBox, javafx.scene.layout.Priority.ALWAYS);
+
+            // Developer group button (using CHAT icon)
+            VBox devGroupBox = createToolButton(SVG.CHAT, i18n("contact.chat"), () -> {
+                Controllers.getSettingsPage().showFeedback();
+                Controllers.navigate(Controllers.getSettingsPage());
+            });
+            HBox.setHgrow(devGroupBox, javafx.scene.layout.Priority.ALWAYS);
+
+            // Auto update button
+            VBox updateBox = createUpdateButton();
+            HBox.setHgrow(updateBox, javafx.scene.layout.Priority.ALWAYS);
+
+            toolBar.getChildren().addAll(settingsBox, multiplayerBox, devGroupBox, updateBox);
+
+            return toolBar;
+        }
+
+        private VBox createToolButton(SVG icon, String title, Runnable action) {
+            VBox box = new VBox();
+            box.setAlignment(Pos.CENTER);
+            box.setSpacing(4);
+
+            JFXButton button = new JFXButton();
+            button.setGraphic(icon.createIcon(20));
+            button.getStyleClass().add("toggle-icon");
+            button.setOnAction(e -> action.run());
+
+            Label label = new Label(title);
+            label.setStyle("-fx-font-size: 10px;");
+            label.setWrapText(true);
+            label.setMaxWidth(70);
+
+            box.getChildren().addAll(button, label);
+            return box;
+        }
+
+        private VBox createUpdateButton() {
+            VBox box = new VBox();
+            box.setAlignment(Pos.CENTER);
+            box.setSpacing(4);
+
+            JFXButton button = new JFXButton();
+            button.setGraphic(SVG.UPDATE.createIcon(20));
+            button.getStyleClass().add("toggle-icon");
+            FXUtils.installFastTooltip(button, i18n("update.check"));
+
+            button.setOnAction(e -> {
+                button.setGraphic(SVG.REFRESH.createIcon(20));
+                UpdateChecker.requestCheckUpdate(UpdateChannel.getChannel(), config().isAcceptPreviewUpdate());
+            });
+
+            FXUtils.onChange(UpdateChecker.checkingUpdateProperty(), checking -> {
+                if (!checking) {
+                    runInFX(() -> {
+                        RemoteVersion latest = UpdateChecker.getLatestVersion();
+                        if (latest != null && UpdateChecker.isOutdated()) {
+                            button.setGraphic(SVG.DOWNLOAD.createIcon(20));
+                            Controllers.dialog(
+                                    new MessageDialogPane.Builder(
+                                            i18n("update.newest_version", latest.getVersion()),
+                                            i18n("update.found"),
+                                            MessageDialogPane.MessageType.INFO
+                                    )
+                                    .addAction(i18n("update"), () -> UpdateHandler.updateFrom(latest))
+                                    .addCancel(null)
+                                    .build()
+                            );
+                        } else if (latest != null) {
+                            button.setGraphic(SVG.CHECK_CIRCLE.createIcon(20));
+                            Controllers.dialog(i18n("update.no_update"), i18n("update.check"), MessageDialogPane.MessageType.INFO);
+                        } else {
+                            button.setGraphic(SVG.UPDATE.createIcon(20));
+                            Controllers.dialog(i18n("update.failed"), i18n("update.check"), MessageDialogPane.MessageType.ERROR);
+                        }
+                    });
+                }
+            });
+
+            Label label = new Label(i18n("update.check"));
+            label.setStyle("-fx-font-size: 10px;");
+            label.setWrapText(true);
+            label.setMaxWidth(70);
+
+            box.getChildren().addAll(button, label);
+            return box;
         }
 
         public void showGameListPopupMenu(Region gameListItem) {

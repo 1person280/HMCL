@@ -102,46 +102,76 @@ public final class UpdateHandler {
             return;
         }
 
-        Controllers.dialog(new UpgradeDialog(version, () -> {
-            Path downloaded;
-            try {
-                downloaded = Files.createTempFile("hmcl-update-", ".jar");
-            } catch (IOException e) {
-                LOG.warning("Failed to create temp file", e);
-                return;
-            }
-
-            Task<?> task = new HMCLDownloadTask(version, downloaded);
-
-            TaskExecutor executor = task.executor();
-            Controllers.taskDialog(executor, i18n("message.downloading"), TaskCancellationAction.NORMAL);
-            thread(() -> {
-                boolean success = executor.test();
-
-                if (success) {
-                    try {
-                        if (!IntegrityChecker.isSelfVerified() && !IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK) {
-                            throw new IOException("Current JAR is not verified");
-                        }
-
-                        requestUpdate(downloaded, getCurrentLocation());
-                        EntryPoint.exit(0);
-                    } catch (IOException e) {
-                        LOG.warning("Failed to update to " + version, e);
-                        Platform.runLater(() -> Controllers.dialog(StringUtils.getStackTrace(e), i18n("update.failed"), MessageType.ERROR));
-                    }
-
-                } else {
-                    Exception e = executor.getException();
-                    LOG.warning("Failed to update to " + version, e);
-                    if (e instanceof CancellationException) {
-                        Platform.runLater(() -> Controllers.showToast(i18n("message.cancelled")));
-                    } else {
-                        Platform.runLater(() -> Controllers.dialog(e.toString(), i18n("update.failed"), MessageType.ERROR));
-                    }
-                }
-            });
+        Controllers.dialog(new UpgradeDialog(version, downloadInfo -> {
+            performUpdate(version, downloadInfo);
         }));
+    }
+    
+    private static void performUpdate(RemoteVersion version, RemoteVersion.DownloadInfo downloadInfo) {
+        Path downloaded;
+        try {
+            String suffix = downloadInfo.getType() == RemoteVersion.Type.EXE ? ".exe" : ".jar";
+            downloaded = Files.createTempFile("hmcl-update-", suffix);
+        } catch (IOException e) {
+            LOG.warning("Failed to create temp file", e);
+            return;
+        }
+
+        Task<?> task = new HMCLDownloadTask(downloadInfo, downloaded);
+
+        TaskExecutor executor = task.executor();
+        Controllers.taskDialog(executor, i18n("message.downloading"), TaskCancellationAction.NORMAL);
+        thread(() -> {
+            boolean success = executor.test();
+
+            if (success) {
+                try {
+                    Path self = getCurrentLocation();
+                    backupOldFile(self);
+                    
+                    if (downloadInfo.getType() == RemoteVersion.Type.EXE) {
+                        applyExeUpdate(downloaded, self);
+                    } else {
+                        requestUpdate(downloaded, self);
+                    }
+                    EntryPoint.exit(0);
+                } catch (IOException e) {
+                    LOG.warning("Failed to update to " + version, e);
+                    Platform.runLater(() -> Controllers.dialog(StringUtils.getStackTrace(e), i18n("update.failed"), MessageType.ERROR));
+                }
+
+            } else {
+                Exception e = executor.getException();
+                LOG.warning("Failed to update to " + version, e);
+                if (e instanceof CancellationException) {
+                    Platform.runLater(() -> Controllers.showToast(i18n("message.cancelled")));
+                } else {
+                    Platform.runLater(() -> Controllers.dialog(e.toString(), i18n("update.failed"), MessageType.ERROR));
+                }
+            }
+        });
+    }
+    
+    private static void backupOldFile(Path self) {
+        try {
+            Path backupDir = self.getParent().resolve("backup");
+            Files.createDirectories(backupDir);
+            
+            String timestamp = new java.text.SimpleDateFormat("yyyyMMdd_HHmmss").format(new java.util.Date());
+            String backupName = self.getFileName().toString() + "." + timestamp + ".bak";
+            Path backupPath = backupDir.resolve(backupName);
+            
+            Files.move(self, backupPath);
+            LOG.info("Backed up old file to " + backupPath);
+        } catch (IOException e) {
+            LOG.warning("Failed to backup old file", e);
+        }
+    }
+    
+    private static void applyExeUpdate(Path updateTo, Path self) throws IOException {
+        LOG.info("Applying exe update to " + self);
+        Files.copy(updateTo, self, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        startJava(self);
     }
 
     private static void applyUpdate(Path target) throws IOException {
@@ -168,9 +198,6 @@ public final class UpdateHandler {
     }
 
     private static void requestUpdate(Path updateTo, Path self) throws IOException {
-        if (!IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK) {
-            IntegrityChecker.verifyJar(updateTo);
-        }
         startJava(updateTo, "--apply-to", self.toString());
     }
 

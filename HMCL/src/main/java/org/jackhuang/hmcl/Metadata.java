@@ -45,10 +45,12 @@ public final class Metadata {
     public static final int MINIMUM_SUPPORTED_JAVA_VERSION = 17;
     public static final int RECOMMENDED_JAVA_VERSION = 21;
 
+    public static final String GITHUB_REPO = "https://github.com/1person280/HMCL";
+    public static final String GITHUB_RELEASES_URL = GITHUB_REPO + "/releases";
     public static final String PUBLISH_URL = "https://hmcl.huangyuhui.net";
     public static final String ABOUT_URL = PUBLISH_URL + "/about";
     public static final String DOWNLOAD_URL = PUBLISH_URL + "/download";
-    public static final String HMCL_UPDATE_URL = System.getProperty("hmcl.update_source.override", PUBLISH_URL + "/api/update_link");
+    public static final String HMCL_UPDATE_URL = System.getProperty("hmcl.update_source.override", "https://api.github.com/repos/1person280/HMCL/releases/latest");
 
     public static final String DOCS_URL = "https://docs.hmcl.net";
     public static final String CONTACT_URL = DOCS_URL + "/help.html";

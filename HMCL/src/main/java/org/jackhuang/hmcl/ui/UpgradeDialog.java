@@ -19,95 +19,94 @@ package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
+import com.jfoenix.controls.JFXRadioButton;
+import com.jfoenix.controls.JFXScrollPane;
 import com.jfoenix.controls.JFXSpinner;
+import javafx.geometry.Insets;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.ToggleGroup;
+import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.upgrade.RemoteVersion;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
-import org.jackhuang.hmcl.upgrade.RemoteVersion;
-import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.versioning.VersionNumber;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Node;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
-import java.net.URL;
-
-import static org.jackhuang.hmcl.Metadata.CHANGELOG_URL;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class UpgradeDialog extends JFXDialogLayout {
 
-    public UpgradeDialog(RemoteVersion remoteVersion, Runnable updateRunnable) {
+    public UpgradeDialog(RemoteVersion remoteVersion, java.util.function.Consumer<RemoteVersion.DownloadInfo> updateCallback) {
         maxWidthProperty().bind(Controllers.getScene().widthProperty().multiply(0.7));
         maxHeightProperty().bind(Controllers.getScene().heightProperty().multiply(0.7));
 
-        setHeading(new Label(i18n("update.changelog")));
-        setBody(new JFXSpinner());
-
-        String url = CHANGELOG_URL + remoteVersion.getChannel().channelName + ".html";
-
-        Task.supplyAsync(Schedulers.io(), () -> {
-            VersionNumber targetVersion = VersionNumber.asVersion(remoteVersion.getVersion());
-            VersionNumber currentVersion = VersionNumber.asVersion(Metadata.VERSION);
-            if (targetVersion.compareTo(currentVersion) <= 0)
-                // Downgrade update, no need to display changelog
-                return null;
-
-            Document document = Jsoup.parse(new URL(url), 30 * 1000);
-            Node node = document.selectFirst("h1[data-version=\"%s\"]".formatted(targetVersion));
-
-            if (node == null || !"h1".equals(node.nodeName())) {
-                LOG.warning("Changelog not found");
-                return null;
-            }
-
-            HTMLRenderer renderer = new HTMLRenderer(uri -> {
-                LOG.info("Open link: " + uri);
-                FXUtils.openLink(uri.toString());
-            });
-
-            do {
-                if ("h1".equals(node.nodeName())) {
-                    String changelogVersion = node.attr("data-version");
-                    if (StringUtils.isBlank(changelogVersion) || currentVersion.compareTo(changelogVersion) >= 0) {
-                        break;
-                    }
-                }
-                renderer.appendNode(node);
-                node = node.nextSibling();
-            } while (node != null);
-
-            renderer.mergeLineBreaks();
-            return renderer.render();
-        }).whenComplete(Schedulers.javafx(), (result, exception) -> {
-            if (exception == null) {
-                if (result != null) {
-                    ScrollPane scrollPane = new ScrollPane(result);
-                    scrollPane.setFitToWidth(true);
-                    FXUtils.smoothScrolling(scrollPane);
-                    setBody(scrollPane);
-                } else {
-                    setBody();
-                }
-            } else {
-                LOG.warning("Failed to load update log, trying to open it in browser");
-                FXUtils.openLink(url);
-                setBody();
-            }
-        }).start();
-
+        setHeading(new Label(i18n("update.changelog") + " - " + i18n("update.newest_version", remoteVersion.getVersion())));
+        
+        VBox contentBox = new VBox(16);
+        contentBox.setPadding(new Insets(16));
+        
         JFXHyperlink openInBrowser = new JFXHyperlink(i18n("web.view_in_browser"));
-        openInBrowser.setExternalLink(url);
+        openInBrowser.setExternalLink(Metadata.GITHUB_RELEASES_URL);
+        
+        ScrollPane changelogPane = new ScrollPane();
+        changelogPane.setFitToWidth(true);
+        changelogPane.setFitToHeight(true);
+        changelogPane.setPrefHeight(300);
+        JFXScrollPane.smoothScrolling(changelogPane);
+        
+        String changelog = remoteVersion.getChangelog();
+        if (changelog != null && !changelog.isEmpty()) {
+            Label changelogLabel = new Label(changelog);
+            changelogLabel.setWrapText(true);
+            changelogLabel.setStyle("-fx-font-family: monospace; -fx-font-size: 12px;");
+            changelogPane.setContent(changelogLabel);
+        } else {
+            changelogPane.setContent(new Label(i18n("update.changelog.unavailable")));
+        }
+        
+        contentBox.getChildren().add(changelogPane);
+        
+        VBox downloadOptionsBox = new VBox(8);
+        downloadOptionsBox.setPadding(new Insets(8, 0, 0, 0));
+        
+        boolean isWindows = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS;
+        boolean hasExe = remoteVersion.hasExeDownload();
+        
+        ToggleGroup downloadGroup = new ToggleGroup();
+        JFXRadioButton jarRadio = new JFXRadioButton(i18n("update.download.jar"));
+        jarRadio.setToggleGroup(downloadGroup);
+        jarRadio.setUserData(remoteVersion.getJarDownload());
+        
+        if (isWindows && hasExe) {
+            JFXRadioButton exeRadio = new JFXRadioButton(i18n("update.download.exe"));
+            exeRadio.setToggleGroup(downloadGroup);
+            exeRadio.setUserData(remoteVersion.getExeDownload());
+            exeRadio.setSelected(true);
+            
+            downloadOptionsBox.getChildren().addAll(
+                new Label(i18n("update.download.choose")),
+                exeRadio,
+                jarRadio
+            );
+        } else {
+            jarRadio.setSelected(true);
+            downloadOptionsBox.getChildren().add(jarRadio);
+        }
+        
+        contentBox.getChildren().add(downloadOptionsBox);
+        setBody(contentBox);
 
         JFXButton updateButton = new JFXButton(i18n("update.accept"));
         updateButton.getStyleClass().add("dialog-accept");
-        updateButton.setOnAction(e -> updateRunnable.run());
+        updateButton.setOnAction(e -> {
+            RemoteVersion.DownloadInfo selectedDownload = (RemoteVersion.DownloadInfo) downloadGroup.getSelectedToggle().getUserData();
+            if (selectedDownload != null) {
+                updateCallback.accept(selectedDownload);
+            }
+        });
 
         JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
         cancelButton.getStyleClass().add("dialog-cancel");

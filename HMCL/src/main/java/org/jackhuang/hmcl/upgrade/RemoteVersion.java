@@ -17,14 +17,19 @@
  */
 package org.jackhuang.hmcl.upgrade;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 public final class RemoteVersion {
@@ -32,34 +37,54 @@ public final class RemoteVersion {
     public static RemoteVersion fetch(UpdateChannel channel, boolean preview, String url) throws IOException {
         try {
             JsonObject response = JsonUtils.fromNonNullJson(NetworkUtils.doGet(url), JsonObject.class);
-            String version = Optional.ofNullable(response.get("version")).map(JsonElement::getAsString).orElseThrow(() -> new IOException("version is missing"));
-            String jarUrl = Optional.ofNullable(response.get("jar")).map(JsonElement::getAsString).orElse(null);
-            String jarHash = Optional.ofNullable(response.get("jarsha1")).map(JsonElement::getAsString).orElse(null);
-            boolean force = Optional.ofNullable(response.get("force")).map(JsonElement::getAsBoolean).orElse(false);
-            if (jarUrl != null && jarHash != null) {
-                return new RemoteVersion(channel, version, jarUrl, Type.JAR, new IntegrityCheck("SHA-1", jarHash), preview, force);
-            } else {
+            String version = parseVersionFromTagName(response.get("tag_name").getAsString());
+            String changelog = Optional.ofNullable(response.get("body")).map(JsonElement::getAsString).orElse("");
+            
+            List<DownloadInfo> downloads = new ArrayList<>();
+            JsonArray assets = response.getAsJsonArray("assets");
+            if (assets != null) {
+                for (JsonElement assetElement : assets) {
+                    JsonObject asset = assetElement.getAsJsonObject();
+                    String name = asset.get("name").getAsString();
+                    String downloadUrl = asset.get("browser_download_url").getAsString();
+                    
+                    if (name.endsWith(".jar") && !name.contains("sources") && !name.contains("javadoc")) {
+                        downloads.add(new DownloadInfo(name, downloadUrl, Type.JAR));
+                    } else if (name.endsWith(".exe") && !name.contains("sha1") && !name.contains("sha256")) {
+                        downloads.add(new DownloadInfo(name, downloadUrl, Type.EXE));
+                    }
+                }
+            }
+            
+            if (downloads.isEmpty()) {
                 throw new IOException("No download url is available");
             }
+            
+            return new RemoteVersion(channel, version, downloads, changelog, preview, false);
         } catch (JsonParseException e) {
             throw new IOException("Malformed response", e);
         }
     }
+    
+    private static String parseVersionFromTagName(String tagName) {
+        if (tagName.startsWith("v")) {
+            return tagName.substring(1);
+        }
+        return tagName;
+    }
 
     private final UpdateChannel channel;
     private final String version;
-    private final String url;
-    private final Type type;
-    private final IntegrityCheck integrityCheck;
+    private final List<DownloadInfo> downloads;
+    private final String changelog;
     private final boolean preview;
     private final boolean force;
 
-    public RemoteVersion(UpdateChannel channel, String version, String url, Type type, IntegrityCheck integrityCheck, boolean preview, boolean force) {
+    public RemoteVersion(UpdateChannel channel, String version, List<DownloadInfo> downloads, String changelog, boolean preview, boolean force) {
         this.channel = channel;
         this.version = version;
-        this.url = url;
-        this.type = type;
-        this.integrityCheck = integrityCheck;
+        this.downloads = downloads;
+        this.changelog = changelog;
         this.preview = preview;
         this.force = force;
     }
@@ -71,17 +96,51 @@ public final class RemoteVersion {
     public String getVersion() {
         return version;
     }
-
-    public String getUrl() {
-        return url;
+    
+    public String getChangelog() {
+        return changelog;
     }
-
-    public Type getType() {
-        return type;
+    
+    public List<DownloadInfo> getDownloads() {
+        return downloads;
     }
-
-    public IntegrityCheck getIntegrityCheck() {
-        return integrityCheck;
+    
+    public DownloadInfo getPreferredDownload() {
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+            for (DownloadInfo download : downloads) {
+                if (download.getType() == Type.EXE) {
+                    return download;
+                }
+            }
+        }
+        for (DownloadInfo download : downloads) {
+            if (download.getType() == Type.JAR) {
+                return download;
+            }
+        }
+        return downloads.get(0);
+    }
+    
+    public DownloadInfo getJarDownload() {
+        for (DownloadInfo download : downloads) {
+            if (download.getType() == Type.JAR) {
+                return download;
+            }
+        }
+        return null;
+    }
+    
+    public DownloadInfo getExeDownload() {
+        for (DownloadInfo download : downloads) {
+            if (download.getType() == Type.EXE) {
+                return download;
+            }
+        }
+        return null;
+    }
+    
+    public boolean hasExeDownload() {
+        return getExeDownload() != null;
     }
 
     public boolean isPreview() {
@@ -94,10 +153,35 @@ public final class RemoteVersion {
 
     @Override
     public String toString() {
-        return "[" + version + " from " + url + "]";
+        return "[" + version + " from GitHub Releases]";
+    }
+    
+    public static class DownloadInfo {
+        private final String name;
+        private final String url;
+        private final Type type;
+        
+        public DownloadInfo(String name, String url, Type type) {
+            this.name = name;
+            this.url = url;
+            this.type = type;
+        }
+        
+        public String getName() {
+            return name;
+        }
+        
+        public String getUrl() {
+            return url;
+        }
+        
+        public Type getType() {
+            return type;
+        }
     }
 
     public enum Type {
-        JAR
+        JAR,
+        EXE
     }
 }
