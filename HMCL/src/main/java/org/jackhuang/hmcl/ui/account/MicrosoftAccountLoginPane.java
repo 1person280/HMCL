@@ -139,9 +139,6 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
             var snapshotHint = new HintPane(MessageDialogPane.MessageType.WARNING);
             snapshotHint.setSegment(i18n("account.methods.microsoft.snapshot"));
             rootContainer.getChildren().add(snapshotHint);
-            btnLogin.setDisable(true);
-            loginButtonSpinner.setLoading(false);
-            return;
         }
 
         if (!IntegrityChecker.isOfficial()) {
@@ -151,7 +148,12 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
         }
 
         if (currentStep instanceof Step.Init) {
-            btnLogin.setOnAction(e -> this.step.set(new Step.StartAuthorizationCodeLogin()));
+            if (Accounts.OAUTH_CALLBACK.getClientId().isEmpty()) {
+                // No ClientId, use device code login
+                btnLogin.setOnAction(e -> this.step.set(new Step.StartDeviceCodeLogin()));
+            } else {
+                btnLogin.setOnAction(e -> this.step.set(new Step.StartAuthorizationCodeLogin()));
+            }
             loginButtonSpinner.setLoading(false);
 
             var hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
