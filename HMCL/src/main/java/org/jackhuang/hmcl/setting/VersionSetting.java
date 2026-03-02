@@ -663,10 +663,10 @@ public final class VersionSetting implements Cloneable, Observable {
 
     /**
      * 0 - Close the launcher when the game starts.<br/>
-     * 1 - Hide the launcher when the game starts.<br/>
+     * 1 - Minimize the launcher when the game starts.<br/>
      * 2 - Keep the launcher open.<br/>
      */
-    private final ObjectProperty<LauncherVisibility> launcherVisibilityProperty = new SimpleObjectProperty<>(this, "launcherVisibility", LauncherVisibility.HIDE);
+    private final ObjectProperty<LauncherVisibility> launcherVisibilityProperty = new SimpleObjectProperty<>(this, "launcherVisibility", LauncherVisibility.MINIMIZE);
 
     public ObjectProperty<LauncherVisibility> launcherVisibilityProperty() {
         return launcherVisibilityProperty;
@@ -860,7 +860,7 @@ public final class VersionSetting implements Cloneable, Observable {
             vs.setNotPatchNatives(Optional.ofNullable(obj.get("notPatchNatives")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setShowLogs(Optional.ofNullable(obj.get("showLogs")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setEnableDebugLogOutput(Optional.ofNullable(obj.get("enableDebugLogOutput")).map(JsonElement::getAsBoolean).orElse(false));
-            vs.setLauncherVisibility(parseJsonPrimitive(obj.getAsJsonPrimitive("launcherVisibility"), LauncherVisibility.class, LauncherVisibility.HIDE));
+            vs.setLauncherVisibility(parseLauncherVisibility(obj.getAsJsonPrimitive("launcherVisibility")));
             vs.setProcessPriority(parseJsonPrimitive(obj.getAsJsonPrimitive("processPriority"), ProcessPriority.class, ProcessPriority.NORMAL));
             vs.setGarbageCollector(parseJsonPrimitive(obj.getAsJsonPrimitive("garbageCollector"), GarbageCollector.class, GarbageCollector.DEFAULT));
             vs.setUseNativeGLFW(Optional.ofNullable(obj.get("useNativeGLFW")).map(JsonElement::getAsBoolean).orElse(false));
@@ -924,6 +924,38 @@ public final class VersionSetting implements Cloneable, Observable {
                     }
                     return defaultValue;
                 }
+            }
+        }
+
+        private LauncherVisibility parseLauncherVisibility(JsonPrimitive primitive) {
+            if (primitive == null) {
+                return LauncherVisibility.MINIMIZE;
+            }
+            
+            if (primitive.isNumber()) {
+                int index = primitive.getAsInt();
+                switch (index) {
+                    case 0:
+                        return LauncherVisibility.CLOSE;
+                    case 1:
+                    case 3:
+                        return LauncherVisibility.MINIMIZE;
+                    case 2:
+                        return LauncherVisibility.KEEP;
+                    default:
+                        return LauncherVisibility.MINIMIZE;
+                }
+            } else {
+                String name = primitive.getAsString();
+                if ("HIDE".equalsIgnoreCase(name) || "HIDE_AND_REOPEN".equalsIgnoreCase(name)) {
+                    return LauncherVisibility.MINIMIZE;
+                }
+                for (LauncherVisibility visibility : LauncherVisibility.values()) {
+                    if (visibility.name().equalsIgnoreCase(name)) {
+                        return visibility;
+                    }
+                }
+                return LauncherVisibility.MINIMIZE;
             }
         }
     }

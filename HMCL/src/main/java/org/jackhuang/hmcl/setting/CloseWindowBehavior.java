@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2025  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,27 +18,18 @@
 package org.jackhuang.hmcl.setting;
 
 /**
- * The visibility of launcher when game starts.
+ * The behavior when user closes the launcher window.
  * @author huangyuhui
  */
-public enum LauncherVisibility {
+public enum CloseWindowBehavior {
 
     /**
-     * Minimize the launcher when the game starts.
+     * Only close the window, keep the launcher running in background.
      */
-    MINIMIZE,
+    CLOSE_WINDOW,
 
     /**
-     * Close the launcher when the game starts.
+     * Exit the launcher completely.
      */
-    CLOSE,
-
-    /**
-     * Keep the launcher visible when the game starts.
-     */
-    KEEP;
-
-    public boolean isDaemon() {
-        return this != CLOSE;
-    }
+    EXIT_LAUNCHER
 }

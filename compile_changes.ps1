@@ -1,0 +1,13 @@
+$srcDir = "c:\Users\1person\HMCL\HMCL\src\main\java"
+$buildDir = "c:\Users\1person\HMCL\HMCL\build\classes\java\main"
+$coreJar = "c:\Users\1person\HMCL\HMCLCore\build\libs\HMCLCore.jar"
+
+javac -encoding UTF-8 -cp "$buildDir;$coreJar" -d $buildDir "$srcDir\org\jackhuang\hmcl\setting\LauncherVisibility.java"
+javac -encoding UTF-8 -cp "$buildDir;$coreJar" -d $buildDir "$srcDir\org\jackhuang\hmcl\setting\CloseWindowBehavior.java"
+javac -encoding UTF-8 -cp "$buildDir;$coreJar" -d $buildDir "$srcDir\org\jackhuang\hmcl\ui\SystemTrayManager.java"
+javac -encoding UTF-8 -cp "$buildDir;$coreJar" -d $buildDir "$srcDir\org\jackhuang\hmcl\setting\Config.java"
+javac -encoding UTF-8 -cp "$buildDir;$coreJar" -d $buildDir "$srcDir\org\jackhuang\hmcl\ui\main\SettingsPage.java"
+javac -encoding UTF-8 -cp "$buildDir;$coreJar" -d $buildDir "$srcDir\org\jackhuang\hmcl\setting\VersionSetting.java"
+javac -encoding UTF-8 -cp "$buildDir;$coreJar" -d $buildDir "$srcDir\org\jackhuang\hmcl\game\LauncherHelper.java"
+javac -encoding UTF-8 -cp "$buildDir;$coreJar" -d $buildDir "$srcDir\org\jackhuang\hmcl\ui\Controllers.java"
+javac -encoding UTF-8 -cp "$buildDir;$coreJar" -d $buildDir "$srcDir\org\jackhuang\hmcl\ui\decorator\Decorator.java"

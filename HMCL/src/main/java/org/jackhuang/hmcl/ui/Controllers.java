@@ -315,7 +315,10 @@ public final class Controllers {
         stage.heightProperty().addListener(weakListener);
         stage.widthProperty().addListener(weakListener);
 
-        stage.setOnCloseRequest(e -> Launcher.stopApplication());
+        stage.setOnCloseRequest(e -> {
+            e.consume();
+            decorator.getDecorator().close();
+        });
 
         decorator = new DecoratorController(stage, getRootPage());
 
@@ -432,6 +435,8 @@ public final class Controllers {
             agreementPane.setActions(agreementLink, yesButton, noButton);
             Controllers.dialog(agreementPane);
         }
+
+        SystemTrayManager.getInstance().initialize(stage);
     }
 
     public static void dialog(Region content) {
@@ -568,6 +573,7 @@ public final class Controllers {
     }
 
     public static void shutdown() {
+        SystemTrayManager.getInstance().shutdown();
         rootPage = null;
         versionPage = null;
         gameListPage = null;

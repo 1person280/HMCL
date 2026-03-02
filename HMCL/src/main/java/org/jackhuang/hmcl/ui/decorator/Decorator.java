@@ -40,11 +40,15 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Launcher;
+import org.jackhuang.hmcl.setting.CloseWindowBehavior;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.SystemTrayManager;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 
 public class Decorator extends Control {
     private final ListProperty<Node> content = new SimpleListProperty<>(FXCollections.observableArrayList());
@@ -263,25 +267,52 @@ public class Decorator extends Control {
     }
 
     public void close() {
-        if (AnimationUtils.playWindowAnimation()) {
-            Timeline timeline = new Timeline(
-                    new KeyFrame(Duration.millis(0),
-                            new KeyValue(opacityProperty(), 1, Motion.EASE),
-                            new KeyValue(scaleXProperty(), 1, Motion.EASE),
-                            new KeyValue(scaleYProperty(), 1, Motion.EASE),
-                            new KeyValue(scaleZProperty(), 0.3, Motion.EASE)
-                    ),
-                    new KeyFrame(Duration.millis(200),
-                            new KeyValue(opacityProperty(), 0, Motion.EASE),
-                            new KeyValue(scaleXProperty(), 0.8, Motion.EASE),
-                            new KeyValue(scaleYProperty(), 0.8, Motion.EASE),
-                            new KeyValue(scaleZProperty(), 0.8, Motion.EASE)
-                    )
-            );
-            timeline.setOnFinished(event -> Launcher.stopApplication());
-            timeline.play();
+        if (config().getCloseWindowBehavior() == CloseWindowBehavior.CLOSE_WINDOW) {
+            if (AnimationUtils.playWindowAnimation()) {
+                Timeline timeline = new Timeline(
+                        new KeyFrame(Duration.millis(0),
+                                new KeyValue(opacityProperty(), 1, Motion.EASE),
+                                new KeyValue(scaleXProperty(), 1, Motion.EASE),
+                                new KeyValue(scaleYProperty(), 1, Motion.EASE),
+                                new KeyValue(scaleZProperty(), 0.3, Motion.EASE)
+                        ),
+                        new KeyFrame(Duration.millis(200),
+                                new KeyValue(opacityProperty(), 0, Motion.EASE),
+                                new KeyValue(scaleXProperty(), 0.8, Motion.EASE),
+                                new KeyValue(scaleYProperty(), 0.8, Motion.EASE),
+                                new KeyValue(scaleZProperty(), 0.8, Motion.EASE)
+                        )
+                );
+                timeline.setOnFinished(event -> {
+                    SystemTrayManager.getInstance().hideStage();
+                    SystemTrayManager.getInstance().initialize(primaryStage);
+                });
+                timeline.play();
+            } else {
+                SystemTrayManager.getInstance().hideStage();
+                SystemTrayManager.getInstance().initialize(primaryStage);
+            }
         } else {
-            Launcher.stopApplication();
+            if (AnimationUtils.playWindowAnimation()) {
+                Timeline timeline = new Timeline(
+                        new KeyFrame(Duration.millis(0),
+                                new KeyValue(opacityProperty(), 1, Motion.EASE),
+                                new KeyValue(scaleXProperty(), 1, Motion.EASE),
+                                new KeyValue(scaleYProperty(), 1, Motion.EASE),
+                                new KeyValue(scaleZProperty(), 0.3, Motion.EASE)
+                        ),
+                        new KeyFrame(Duration.millis(200),
+                                new KeyValue(opacityProperty(), 0, Motion.EASE),
+                                new KeyValue(scaleXProperty(), 0.8, Motion.EASE),
+                                new KeyValue(scaleYProperty(), 0.8, Motion.EASE),
+                                new KeyValue(scaleZProperty(), 0.8, Motion.EASE)
+                        )
+                );
+                timeline.setOnFinished(event -> Launcher.stopApplication());
+                timeline.play();
+            } else {
+                Launcher.stopApplication();
+            }
         }
     }
 

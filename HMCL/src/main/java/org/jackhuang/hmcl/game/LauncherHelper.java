@@ -64,7 +64,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import static javafx.application.Platform.runLater;
-import static javafx.application.Platform.setImplicitExit;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
 import static org.jackhuang.hmcl.util.Lang.resolveException;
@@ -645,25 +644,20 @@ public final class LauncherHelper {
 
     private void checkExit() {
         switch (launcherVisibility) {
-            case HIDE_AND_REOPEN:
+            case MINIMIZE:
                 runLater(() -> {
                     Optional.ofNullable(Controllers.getStage())
-                            .ifPresent(Stage::show);
+                            .ifPresent(stage -> {
+                                stage.show();
+                                stage.toFront();
+                                stage.requestFocus();
+                            });
                 });
                 break;
             case KEEP:
-                // No operations here
                 break;
             case CLOSE:
                 throw new Error("Never get to here");
-            case HIDE:
-                runLater(() -> {
-                    // Shut down the platform when user closed log window.
-                    setImplicitExit(true);
-                    // If we use Launcher.stop(), log window will be halt immediately.
-                    Launcher.stopWithoutPlatform();
-                });
-                break;
         }
     }
 
@@ -769,10 +763,8 @@ public final class LauncherHelper {
 
         private void finishLaunch() {
             switch (launcherVisibility) {
-                case HIDE_AND_REOPEN:
+                case MINIMIZE:
                     runLater(() -> {
-                        // If application was stopped and execution services did not finish termination,
-                        // these codes will be executed.
                         if (Controllers.getStage() != null) {
                             Controllers.getStage().hide();
                             launchingLatch.countDown();
@@ -780,23 +772,9 @@ public final class LauncherHelper {
                     });
                     break;
                 case CLOSE:
-                    // Never come to here.
                     break;
                 case KEEP:
                     runLater(launchingLatch::countDown);
-                    break;
-                case HIDE:
-                    launchingLatch.countDown();
-                    runLater(() -> {
-                        // If application was stopped and execution services did not finish termination,
-                        // these codes will be executed.
-                        if (Controllers.getStage() != null) {
-                            Controllers.getStage().close();
-                            Controllers.shutdown();
-                            Schedulers.shutdown();
-                            System.gc();
-                        }
-                    });
                     break;
             }
         }
