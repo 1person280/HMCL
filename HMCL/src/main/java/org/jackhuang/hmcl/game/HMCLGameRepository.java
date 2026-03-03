@@ -391,10 +391,10 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 .setProfileName(Metadata.TITLE)
                 .setGameArguments(StringUtils.tokenize(vs.getMinecraftArgs()))
                 .setOverrideJavaArguments(StringUtils.tokenize(vs.getJavaArgs()))
-                .setMaxMemory(vs.isNoJVMArgs() && vs.isAutoMemory() ? null : (int) (getAllocatedMemory(
+                .setMaxMemory(vs.isNoJVMArgs() && vs.getMemoryMode() == VersionSetting.MemoryMode.AUTO ? null : (int) (getAllocatedMemory(
                         vs.getMaxMemory() * 1024L * 1024L,
                         SystemInfo.getPhysicalMemoryStatus().getAvailable(),
-                        vs.isAutoMemory()
+                        false
                 ) / 1024 / 1024))
                 .setMinMemory(vs.getMinMemory())
                 .setMetaspace(Lang.toIntOrNull(vs.getPermSize()))
@@ -444,7 +444,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             }
         }
 
-        if (vs.isAutoMemory() && builder.getJavaArguments().stream().anyMatch(it -> it.startsWith("-Xmx")))
+        if (vs.getMemoryMode() == VersionSetting.MemoryMode.AUTO && builder.getJavaArguments().stream().anyMatch(it -> it.startsWith("-Xmx")))
             builder.setMaxMemory(null);
 
         return builder;

@@ -34,6 +34,7 @@ import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Screen;
+import javafx.util.StringConverter;
 import org.jackhuang.hmcl.game.GameDirectoryType;
 import org.jackhuang.hmcl.game.GarbageCollector;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -257,54 +258,63 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 Label title = new Label(i18n("settings.memory"));
                 VBox.setMargin(title, new Insets(0, 0, 8, 0));
 
-                chkAutoAllocate = new JFXCheckBox(i18n("settings.memory.auto_allocate"));
-                VBox.setMargin(chkAutoAllocate, new Insets(0, 0, 8, 5));
+                JFXComboBox<VersionSetting.MemoryMode> cboMemoryMode = new JFXComboBox<>();
+                cboMemoryMode.getItems().setAll(VersionSetting.MemoryMode.values());
+                cboMemoryMode.setConverter(new StringConverter<VersionSetting.MemoryMode>() {
+                    @Override
+                    public String toString(VersionSetting.MemoryMode mode) {
+                        return i18n("settings.memory.mode." + mode.name().toLowerCase());
+                    }
 
-                HBox lowerBoundPane = new HBox(8);
-                lowerBoundPane.setStyle("-fx-view-order: -1;");
-                lowerBoundPane.setAlignment(Pos.CENTER);
-                VBox.setMargin(lowerBoundPane, new Insets(0, 0, 0, 16));
+                    @Override
+                    public VersionSetting.MemoryMode fromString(String string) {
+                        return VersionSetting.MemoryMode.valueOf(string);
+                    }
+                });
+                VBox.setMargin(cboMemoryMode, new Insets(0, 0, 8, 0));
+
+                VBox memoryInputPane = new VBox(8);
+                memoryInputPane.setAlignment(Pos.CENTER_LEFT);
+                VBox.setMargin(memoryInputPane, new Insets(0, 0, 0, 16));
                 {
-                    Label label = new Label();
-                    label.textProperty().bind(Bindings.createStringBinding(() -> {
-                        if (chkAutoAllocate.isSelected()) {
-                            return i18n("settings.memory.lower_bound");
-                        } else {
-                            return i18n("settings.memory");
-                        }
-                    }, chkAutoAllocate.selectedProperty()));
+                    HBox gbInputPane = new HBox(8);
+                    gbInputPane.setAlignment(Pos.CENTER);
+                    {
+                        Label label = new Label(i18n("settings.memory.gb"));
+                        IntegerProperty maxMemoryGiBProperty = new SimpleIntegerProperty();
+                        FXUtils.onChangeAndOperate(maxMemory, memory -> maxMemoryGiBProperty.set(Math.max(1, memory.intValue() / 1024)));
+                        maxMemoryGiBProperty.addListener((obs, oldVal, newVal) -> maxMemory.set(newVal.intValue() * 1024));
 
-                    int maxMemoryGiB = (int) GIGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize());
-                    JFXSlider slider = new JFXSlider(1, Math.max(1, maxMemoryGiB), 1);
-                    HBox.setMargin(slider, new Insets(0, 0, 0, 8));
-                    HBox.setHgrow(slider, Priority.ALWAYS);
-                    slider.setMajorTickUnit(1);
-                    slider.setMinorTickCount(0);
-                    slider.setSnapToTicks(true);
-                    slider.setValueFactory(self -> Bindings.createStringBinding(() -> (int) self.getValue() + " GiB", self.valueProperty()));
-                    AtomicBoolean changedByTextField = new AtomicBoolean(false);
-                    FXUtils.onChangeAndOperate(maxMemory, memory -> {
-                        changedByTextField.set(true);
-                        int memoryGiB = Math.max(1, memory.intValue() / 1024);
-                        slider.setValue(memoryGiB);
-                        changedByTextField.set(false);
-                    });
-                    slider.valueProperty().addListener((value, oldVal, newVal) -> {
-                        if (changedByTextField.get()) return;
-                        maxMemory.set((int) value.getValue().doubleValue() * 1024);
-                    });
+                        JFXTextField txtMaxMemoryGB = new JFXTextField();
+                        FXUtils.setLimitWidth(txtMaxMemoryGB, 80);
+                        FXUtils.setValidateWhileTextChanged(txtMaxMemoryGB, true);
+                        txtMaxMemoryGB.textProperty().bindBidirectional(maxMemoryGiBProperty, SafeStringConverter.fromInteger());
+                        txtMaxMemoryGB.setValidators(new NumberValidator(i18n("input.number"), false));
 
-                    IntegerProperty maxMemoryGiBProperty = new SimpleIntegerProperty();
-                    FXUtils.onChangeAndOperate(maxMemory, memory -> maxMemoryGiBProperty.set(Math.max(1, memory.intValue() / 1024)));
-                    maxMemoryGiBProperty.addListener((obs, oldVal, newVal) -> maxMemory.set(newVal.intValue() * 1024));
+                        gbInputPane.getChildren().setAll(label, txtMaxMemoryGB, new Label(i18n("settings.memory.unit.gib")));
+                    }
 
-                    JFXTextField txtMaxMemory = new JFXTextField();
-                    FXUtils.setLimitWidth(txtMaxMemory, 60);
-                    FXUtils.setValidateWhileTextChanged(txtMaxMemory, true);
-                    txtMaxMemory.textProperty().bindBidirectional(maxMemoryGiBProperty, SafeStringConverter.fromInteger());
-                    txtMaxMemory.setValidators(new NumberValidator(i18n("input.number"), false));
+                    HBox mbInputPane = new HBox(8);
+                    mbInputPane.setAlignment(Pos.CENTER);
+                    {
+                        Label label = new Label(i18n("settings.memory.mb"));
+                        IntegerProperty maxMemoryMiBProperty = new SimpleIntegerProperty();
+                        FXUtils.onChangeAndOperate(maxMemory, memory -> maxMemoryMiBProperty.set(memory.intValue()));
+                        maxMemoryMiBProperty.addListener((obs, oldVal, newVal) -> maxMemory.set(newVal.intValue()));
 
-                    lowerBoundPane.getChildren().setAll(label, slider, txtMaxMemory, new Label(i18n("settings.memory.unit.gib")));
+                        JFXTextField txtMaxMemoryMB = new JFXTextField();
+                        FXUtils.setLimitWidth(txtMaxMemoryMB, 80);
+                        FXUtils.setValidateWhileTextChanged(txtMaxMemoryMB, true);
+                        txtMaxMemoryMB.textProperty().bindBidirectional(maxMemoryMiBProperty, SafeStringConverter.fromInteger());
+                        txtMaxMemoryMB.setValidators(new NumberValidator(i18n("input.number"), false));
+
+                        mbInputPane.getChildren().setAll(label, txtMaxMemoryMB, new Label(i18n("settings.memory.unit.mib")));
+                    }
+
+                    Label autoLabel = new Label(i18n("settings.memory.auto"));
+                    autoLabel.setPadding(new Insets(8, 0, 0, 0));
+
+                    memoryInputPane.getChildren().setAll(gbInputPane, mbInputPane, autoLabel);
                 }
 
                 StackPane progressBarPane = new StackPane();
@@ -322,12 +332,15 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                             memoryStatus));
                     StackPane allocateMemory = new StackPane();
                     allocateMemory.getStyleClass().add("memory-allocate");
+                    allocateMemory.visibleProperty().bind(Bindings.createBooleanBinding(() -> 
+                            cboMemoryMode.getValue() != VersionSetting.MemoryMode.AUTO, cboMemoryMode.valueProperty()));
+                    allocateMemory.managedProperty().bind(allocateMemory.visibleProperty());
                     allocateMemory.maxWidthProperty().bind(Bindings.createDoubleBinding(() ->
                                     progressBarPane.getWidth() *
                                             Math.min(1.0,
-                                                    (double) (HMCLGameRepository.getAllocatedMemory(maxMemory.get() * 1024L * 1024L, memoryStatus.get().getAvailable(), chkAutoAllocate.isSelected())
+                                                    (double) (HMCLGameRepository.getAllocatedMemory(maxMemory.get() * 1024L * 1024L, memoryStatus.get().getAvailable(), false)
                                                             + memoryStatus.get().getUsed()) / memoryStatus.get().getTotal()), progressBarPane.widthProperty(),
-                            maxMemory, memoryStatus, chkAutoAllocate.selectedProperty()));
+                            maxMemory, memoryStatus));
 
                     progressBarPane.getChildren().setAll(allocateMemory, usedMemory);
                 }
@@ -345,19 +358,34 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
                     Label lblAllocateMemory = new Label();
                     lblAllocateMemory.textProperty().bind(Bindings.createStringBinding(() -> {
-                        long maxMemory = Lang.parseInt(this.maxMemory.get(), 0) * 1024L * 1024L;
-                        return i18n(memoryStatus.get().hasAvailable() && maxMemory > memoryStatus.get().getAvailable()
-                                        ? (chkAutoAllocate.isSelected() ? "settings.memory.allocate.auto.exceeded" : "settings.memory.allocate.manual.exceeded")
-                                        : (chkAutoAllocate.isSelected() ? "settings.memory.allocate.auto" : "settings.memory.allocate.manual"),
-                                GIGABYTES.convertFromBytes(maxMemory),
-                                GIGABYTES.convertFromBytes(HMCLGameRepository.getAllocatedMemory(maxMemory, memoryStatus.get().getAvailable(), chkAutoAllocate.isSelected())),
-                                GIGABYTES.convertFromBytes(memoryStatus.get().getAvailable()));
-                    }, memoryStatus, maxMemory, chkAutoAllocate.selectedProperty()));
+                        long maxMemoryVal = Lang.parseInt(this.maxMemory.get(), 0) * 1024L * 1024L;
+                        VersionSetting.MemoryMode mode = cboMemoryMode.getValue();
+                        if (mode == VersionSetting.MemoryMode.AUTO) {
+                            return i18n("settings.memory.allocate.game_decided");
+                        } else {
+                            return i18n(memoryStatus.get().hasAvailable() && maxMemoryVal > memoryStatus.get().getAvailable()
+                                            ? "settings.memory.allocate.manual.exceeded"
+                                            : "settings.memory.allocate.manual",
+                                    GIGABYTES.convertFromBytes(maxMemoryVal),
+                                    GIGABYTES.convertFromBytes(HMCLGameRepository.getAllocatedMemory(maxMemoryVal, memoryStatus.get().getAvailable(), false)),
+                                    GIGABYTES.convertFromBytes(memoryStatus.get().getAvailable()));
+                        }
+                    }, memoryStatus, maxMemory, cboMemoryMode.valueProperty()));
                     lblAllocateMemory.getStyleClass().add("memory-label");
                     digitalPane.setRight(lblAllocateMemory);
                 }
 
-                maxMemoryPane.getChildren().setAll(title, chkAutoAllocate, lowerBoundPane, progressBarPane, digitalPane);
+                cboMemoryMode.valueProperty().addListener((obs, oldVal, newVal) -> {
+                    if (newVal == VersionSetting.MemoryMode.GB) {
+                        memoryInputPane.getChildren().setAll(memoryInputPane.getChildren().get(0), memoryInputPane.getChildren().get(2));
+                    } else if (newVal == VersionSetting.MemoryMode.MB) {
+                        memoryInputPane.getChildren().setAll(memoryInputPane.getChildren().get(1), memoryInputPane.getChildren().get(2));
+                    } else {
+                        memoryInputPane.getChildren().setAll(memoryInputPane.getChildren().get(2));
+                    }
+                });
+
+                maxMemoryPane.getChildren().setAll(title, cboMemoryMode, memoryInputPane, progressBarPane, digitalPane);
             }
 
             launcherVisibilityPane = new LineSelectButton<>();
@@ -535,7 +563,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             javaCustomOption.valueProperty().unbindBidirectional(lastVersionSetting.javaDirProperty());
             gameDirCustomOption.valueProperty().unbindBidirectional(lastVersionSetting.gameDirProperty());
             FXUtils.unbind(txtServerIP, lastVersionSetting.serverIpProperty());
-            chkAutoAllocate.selectedProperty().unbindBidirectional(lastVersionSetting.autoMemoryProperty());
+            cboMemoryMode.valueProperty().unbindBidirectional(lastVersionSetting.memoryModeProperty());
             chkFullscreen.selectedProperty().unbindBidirectional(lastVersionSetting.fullscreenProperty());
             showLogsPane.selectedProperty().unbindBidirectional(lastVersionSetting.showLogsProperty());
             enableDebugLogOutputPane.selectedProperty().unbindBidirectional(lastVersionSetting.enableDebugLogOutputProperty());
@@ -574,7 +602,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         javaCustomOption.bindBidirectional(versionSetting.javaDirProperty());
         gameDirCustomOption.bindBidirectional(versionSetting.gameDirProperty());
         FXUtils.bindString(txtServerIP, versionSetting.serverIpProperty());
-        chkAutoAllocate.selectedProperty().bindBidirectional(versionSetting.autoMemoryProperty());
+        cboMemoryMode.valueProperty().bindBidirectional(versionSetting.memoryModeProperty());
         chkFullscreen.selectedProperty().bindBidirectional(versionSetting.fullscreenProperty());
         showLogsPane.selectedProperty().bindBidirectional(versionSetting.showLogsProperty());
         enableDebugLogOutputPane.selectedProperty().bindBidirectional(versionSetting.enableDebugLogOutputProperty());

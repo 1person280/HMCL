@@ -263,16 +263,40 @@ public final class VersionSetting implements Cloneable, Observable {
         minMemoryProperty.set(minMemory);
     }
 
+    public enum MemoryMode {
+        GB,    // 使用 GB 为单位指定内存
+        MB,    // 使用 MB 为单位指定内存
+        AUTO   // 由游戏决定，不使用配置分配
+    }
+
+    private final ObjectProperty<MemoryMode> memoryModeProperty = new SimpleObjectProperty<>(this, "memoryMode", MemoryMode.GB);
+
+    public ObjectProperty<MemoryMode> memoryModeProperty() {
+        return memoryModeProperty;
+    }
+
+    public MemoryMode getMemoryMode() {
+        return memoryModeProperty.get();
+    }
+
+    public void setMemoryMode(MemoryMode memoryMode) {
+        memoryModeProperty.set(memoryMode);
+    }
+
+    @Deprecated
     private final BooleanProperty autoMemory = new SimpleBooleanProperty(this, "autoMemory", true);
 
+    @Deprecated
     public boolean isAutoMemory() {
         return autoMemory.get();
     }
 
+    @Deprecated
     public BooleanProperty autoMemoryProperty() {
         return autoMemory;
     }
 
+    @Deprecated
     public void setAutoMemory(boolean autoMemory) {
         this.autoMemory.set(autoMemory);
     }
@@ -774,7 +798,7 @@ public final class VersionSetting implements Cloneable, Observable {
             obj.addProperty("environmentVariables", src.getEnvironmentVariables());
             obj.addProperty("maxMemory", src.getMaxMemory() <= 0 ? SUGGESTED_MEMORY : src.getMaxMemory());
             obj.addProperty("minMemory", src.getMinMemory());
-            obj.addProperty("autoMemory", src.isAutoMemory());
+            obj.addProperty("memoryMode", src.getMemoryMode().name());
             obj.addProperty("permSize", src.getPermSize());
             obj.addProperty("width", src.getWidth());
             obj.addProperty("height", src.getHeight());
@@ -841,7 +865,7 @@ public final class VersionSetting implements Cloneable, Observable {
             vs.setEnvironmentVariables(Optional.ofNullable(obj.get("environmentVariables")).map(JsonElement::getAsString).orElse(""));
             vs.setMaxMemory(maxMemoryN);
             vs.setMinMemory(Optional.ofNullable(obj.get("minMemory")).map(JsonElement::getAsInt).orElse(null));
-            vs.setAutoMemory(Optional.ofNullable(obj.get("autoMemory")).map(JsonElement::getAsBoolean).orElse(true));
+            vs.setMemoryMode(parseJsonPrimitive(obj.getAsJsonPrimitive("memoryMode"), MemoryMode.class, MemoryMode.GB));
             vs.setPermSize(Optional.ofNullable(obj.get("permSize")).map(JsonElement::getAsString).orElse(""));
             vs.setWidth(Optional.ofNullable(obj.get("width")).map(JsonElement::getAsJsonPrimitive).map(this::parseJsonPrimitive).orElse(0));
             vs.setHeight(Optional.ofNullable(obj.get("height")).map(JsonElement::getAsJsonPrimitive).map(this::parseJsonPrimitive).orElse(0));
